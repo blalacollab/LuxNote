@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { useCanvasHotkeys } from '../hooks/useCanvasHotkeys';
+import { isTypingTarget, useCanvasHotkeys } from '../hooks/useCanvasHotkeys';
 import { createDefaultScene } from '../lib/seed';
 import { resetCanvasStore, useCanvasStore } from '../store/canvasStore';
 
@@ -13,6 +13,9 @@ function HotkeyHarness() {
   return (
     <div>
       <textarea aria-label="editor" />
+      <div aria-label="rich-editor" contentEditable suppressContentEditableWarning>
+        <span>draft</span>
+      </div>
       <output aria-label="note-count">{noteCount}</output>
     </div>
   );
@@ -39,6 +42,35 @@ describe('useCanvasHotkeys', () => {
     const editor = screen.getByLabelText('editor');
     await user.click(editor);
     await user.keyboard('n');
+
+    expect(screen.getByLabelText('note-count')).toHaveTextContent('3');
+  });
+
+  it('treats descendants inside contenteditable editors as typing targets', () => {
+    const host = document.createElement('div');
+    const child = document.createElement('span');
+    const text = document.createTextNode('draft');
+
+    host.setAttribute('contenteditable', 'true');
+    child.append(text);
+    host.append(child);
+    document.body.append(host);
+
+    expect(isTypingTarget(text)).toBe(true);
+    expect(isTypingTarget(child)).toBe(true);
+  });
+
+  it('does not delete a note when backspace is pressed inside a rich editor', async () => {
+    const user = userEvent.setup();
+    render(<HotkeyHarness />);
+
+    useCanvasStore.setState({
+      selectedNoteId: Object.keys(useCanvasStore.getState().notes)[0] ?? null,
+    });
+
+    const richEditor = screen.getByLabelText('rich-editor');
+    await user.click(richEditor);
+    await user.keyboard('{Backspace}');
 
     expect(screen.getByLabelText('note-count')).toHaveTextContent('3');
   });

@@ -166,6 +166,13 @@
   letter-spacing: 0.1em;
 }
 
+.footerLead {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .pulse {
   width: 9px;
   height: 9px;
@@ -173,6 +180,36 @@
   background: rgba(145, 241, 255, 0.88);
   box-shadow: 0 0 18px rgba(145, 241, 255, 0.58);
   transform: rotate(45deg);
+  flex: 0 0 auto;
+}
+
+.tagList {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+}
+
+.tagChip,
+.tagChipMuted {
+  display: inline-flex;
+  align-items: center;
+  max-width: 88px;
+  min-height: 18px;
+  padding: 0 6px;
+  border: 1px solid rgba(160, 216, 228, 0.12);
+  background: rgba(10, 14, 18, 0.58);
+  color: rgba(214, 236, 242, 0.74);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tagChipMuted {
+  color: rgba(194, 220, 228, 0.54);
 }
 
 .compact .footer {

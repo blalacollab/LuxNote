@@ -28,3 +28,68 @@ Object.defineProperty(window, 'matchMedia', {
     },
   }),
 });
+
+const localStorageStore = new Map<string, string>();
+
+Object.defineProperty(window, 'localStorage', {
+  writable: true,
+  value: {
+    getItem(key: string) {
+      return localStorageStore.get(key) ?? null;
+    },
+    setItem(key: string, value: string) {
+      localStorageStore.set(key, value);
+    },
+    removeItem(key: string) {
+      localStorageStore.delete(key);
+    },
+    clear() {
+      localStorageStore.clear();
+    },
+  },
+});
+
+Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', {
+  writable: true,
+  value() {},
+});
+
+Object.defineProperty(HTMLElement.prototype, 'setPointerCapture', {
+  writable: true,
+  value() {},
+});
+
+Object.defineProperty(HTMLElement.prototype, 'releasePointerCapture', {
+  writable: true,
+  value() {},
+});
+
+Object.defineProperty(HTMLElement.prototype, 'hasPointerCapture', {
+  writable: true,
+  value() {
+    return false;
+  },
+});
+
+Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+  writable: true,
+  value() {
+    return {
+      save() {},
+      restore() {},
+      beginPath() {},
+      moveTo() {},
+      lineTo() {},
+      stroke() {},
+      fill() {},
+      arc() {},
+      bezierCurveTo() {},
+      clearRect() {},
+      scale() {},
+      setTransform() {},
+      lineWidth: 1,
+      strokeStyle: '',
+      fillStyle: '',
+    };
+  },
+});

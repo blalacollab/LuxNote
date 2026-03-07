@@ -1,7 +1,7 @@
 import { useMemo, useRef } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 
-import { toPreviewText } from '../lib/markdown';
+import { extractMarkdownTags, toPreviewText } from '../lib/markdownDialect';
 import type { CameraState, NoteMotion, NoteRecord, Vec2, ViewportSize } from '../lib/types';
 import { useCanvasStore } from '../store/canvasStore';
 import styles from './NoteCard.module.css';
@@ -50,6 +50,9 @@ export function NoteCard({
   const dragRef = useRef<DragSession | null>(null);
   const suppressOpenRef = useRef(false);
   const preview = useMemo(() => toPreviewText(note.body).slice(0, 160), [note.body]);
+  const tags = useMemo(() => extractMarkdownTags(note.body), [note.body]);
+  const visibleTags = useMemo(() => tags.slice(0, 2), [tags]);
+  const hiddenTagCount = Math.max(0, tags.length - visibleTags.length);
   const compact = camera.zoom < 0.72;
   const x = (note.x - camera.x) * camera.zoom + viewport.width / 2;
   const y = (note.y - camera.y) * camera.zoom + viewport.height / 2;
@@ -198,7 +201,7 @@ export function NoteCard({
       <header className={styles.header}>
         <div className={styles.titleGroup}>
           <p className={styles.eyebrow}>{isSystem ? 'Hidden Entry' : 'Field Note'}</p>
-          <h3 className={styles.title}>{note.title}</h3>
+          <h3 className={styles.title}>{note.title || 'Untitled note'}</h3>
         </div>
         {!isSystem ? (
           <div className={styles.actions}>
@@ -256,7 +259,21 @@ export function NoteCard({
         )}
         <p className={styles.snippet}>{preview || 'Empty note'}</p>
         <footer className={styles.footer}>
-          <span className={styles.pulse} />
+          <div className={styles.footerLead}>
+            <span className={styles.pulse} />
+            {!isSystem && visibleTags.length > 0 ? (
+              <div className={styles.tagList}>
+                {visibleTags.map((tag) => (
+                  <span key={tag} className={styles.tagChip}>
+                    #{tag}
+                  </span>
+                ))}
+                {hiddenTagCount > 0 ? (
+                  <span className={styles.tagChipMuted}>+{hiddenTagCount}</span>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
           <span>
             {isSystem
               ? 'Settings / Help'

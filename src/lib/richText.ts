@@ -60,11 +60,7 @@ function flushParagraph(buffer: string[], blocks: string[]): void {
     return;
   }
 
-  blocks.push(
-    buffer
-      .map((line) => `<p>${renderInline(line)}</p>`)
-      .join(''),
-  );
+  blocks.push(buffer.map((line) => `<p>${renderInline(line)}</p>`).join(''));
   buffer.length = 0;
 }
 
@@ -114,13 +110,17 @@ function flushQuote(lines: string[], blocks: string[]): void {
   const paragraphs = lines.join('\n').split(/\n{2,}/);
   blocks.push(
     `<blockquote>${paragraphs
-      .map((paragraph) =>
-        paragraph
-          .split('\n')
-          .filter(Boolean)
+      .map((paragraph) => {
+        const quoteLines = paragraph.split('\n').filter(Boolean);
+
+        if (quoteLines.length === 0) {
+          return '<p><br /></p>';
+        }
+
+        return quoteLines
           .map((line) => `<p>${renderInline(line)}</p>`)
-          .join(''),
-      )
+          .join('');
+      })
       .join('')}</blockquote>`,
   );
   lines.length = 0;
@@ -130,8 +130,9 @@ function flushCodeBlock(
   lines: string[],
   blocks: string[],
   language: string,
+  allowEmpty = false,
 ): void {
-  if (lines.length === 0) {
+  if (lines.length === 0 && !allowEmpty) {
     return;
   }
 
@@ -277,9 +278,9 @@ export function markdownToRichHtml(markdown: string): string {
     }
 
     const headingMatch = line.match(/^(#{1,6})\s+(.*)$/);
-    const taskMatch = line.match(/^[-*]\s+\[([ xX])\]\s+(.*)$/);
-    const bulletMatch = line.match(/^[-*]\s+(.*)$/);
-    const orderedMatch = line.match(/^\d+\.\s+(.*)$/);
+    const taskMatch = rawLine.match(/^[-*]\s+\[([ xX])\]\s*(.*)$/);
+    const bulletMatch = rawLine.match(/^[-*]\s*(.*)$/);
+    const orderedMatch = rawLine.match(/^\d+\.\s*(.*)$/);
     const quoteMatch = line.match(/^>\s?(.*)$/);
     const imageOnlyMatch = line.match(/^!\[([^\]]*)\]\(([^)]+)\)$/);
     const horizontalRuleMatch = line.match(/^([-*_])(?:\s*\1){2,}\s*$/);
@@ -373,7 +374,7 @@ export function markdownToRichHtml(markdown: string): string {
   }
 
   if (inCodeFence) {
-    flushCodeBlock(codeBlockBuffer, blocks, codeFenceLanguage);
+    flushCodeBlock(codeBlockBuffer, blocks, codeFenceLanguage, true);
   }
 
   flushAll(
@@ -384,6 +385,10 @@ export function markdownToRichHtml(markdown: string): string {
     tableBuffer,
     blocks,
   );
+
+  if (blocks.length === 0) {
+    return '<p><br /></p>';
+  }
 
   return blocks.join('');
 }
@@ -553,7 +558,7 @@ function blockToMarkdown(node: Node): string {
       ].join('\n');
     }
     case 'div':
-    case 'p': {
+    case 'p':
       if (
         Array.from(element.children).some((child) =>
           isBlockElementTag(child.tagName.toLowerCase()),
@@ -567,7 +572,6 @@ function blockToMarkdown(node: Node): string {
         .map((line) => line.trim())
         .filter(Boolean)
         .join('\n\n');
-    }
     default:
       if (element.children.length > 0) {
         return childBlocks.join('\n\n');
@@ -591,22 +595,4 @@ export function richHtmlToMarkdown(html: string): string {
     .filter(Boolean);
 
   return blocks.join('\n\n').trim();
-}
-
-export function extractMarkdownTags(markdown: string): string[] {
-  const stripped = markdown
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/`[^`]+`/g, ' ');
-  const matches = stripped.matchAll(
-    /(^|[^/\p{L}\p{N}_-])#([\p{L}\p{N}_/-]+)/gu,
-  );
-  const unique = new Set<string>();
-
-  for (const match of matches) {
-    if (match[2]) {
-      unique.add(match[2]);
-    }
-  }
-
-  return Array.from(unique);
 }

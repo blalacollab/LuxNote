@@ -3,17 +3,35 @@ import { useEffect, useState } from 'react';
 import { useCanvasStore } from '../store/canvasStore';
 
 export function isTypingTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) {
+  const element =
+    target instanceof HTMLElement
+      ? target
+      : target instanceof Node
+        ? target.parentElement
+        : null;
+
+  if (!element) {
     return false;
   }
 
-  const tag = target.tagName;
+  let current: HTMLElement | null = element;
+
+  while (current) {
+    if (
+      current.isContentEditable ||
+      current.getAttribute('contenteditable') === 'true'
+    ) {
+      return true;
+    }
+
+    current = current.parentElement;
+  }
 
   return (
-    target.isContentEditable ||
-    tag === 'INPUT' ||
-    tag === 'TEXTAREA' ||
-    tag === 'SELECT'
+    Boolean(element.closest('[role="textbox"]')) ||
+    element.tagName === 'INPUT' ||
+    element.tagName === 'TEXTAREA' ||
+    element.tagName === 'SELECT'
   );
 }
 

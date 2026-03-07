@@ -58,6 +58,7 @@ interface CanvasStoreState {
   nextZ: number;
   saveStatus: SaveStatus;
   isHydrated: boolean;
+  pristineDraftNoteIds: Record<string, true>;
   createNote: (position?: Vec2) => string;
   updateNote: (id: string, patch: Partial<Pick<NoteRecord, 'title' | 'body'>>) => void;
   deleteNote: (id: string) => void;
@@ -90,6 +91,45 @@ function computeNextZ(notes: Record<string, NoteRecord>): number {
   return (
     Object.values(notes).reduce((max, note) => Math.max(max, note.z), 0) + 1
   );
+}
+
+function isBlankNote(note: Pick<NoteRecord, 'title' | 'body'>): boolean {
+  return note.title.trim() === '' && note.body.trim() === '';
+}
+
+function removeNoteFromState(state: CanvasStoreState, id: string) {
+  if (!state.notes[id]) {
+    return state;
+  }
+
+  const nextNotes = { ...state.notes };
+  const nextConnections = { ...state.connections };
+  const nextMotions = { ...state.noteMotions };
+  const nextPristineDraftNoteIds = { ...state.pristineDraftNoteIds };
+
+  delete nextNotes[id];
+  delete nextMotions[id];
+  delete nextPristineDraftNoteIds[id];
+
+  for (const connection of Object.values(state.connections)) {
+    if (connection.from === id || connection.to === id) {
+      delete nextConnections[connection.id];
+    }
+  }
+
+  return {
+    notes: nextNotes,
+    connections: nextConnections,
+    activeDialog:
+      state.activeDialog?.type === 'note' && state.activeDialog.noteId === id
+        ? null
+        : state.activeDialog,
+    selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId,
+    linkingFromId: state.linkingFromId === id ? null : state.linkingFromId,
+    draggingNoteId: state.draggingNoteId === id ? null : state.draggingNoteId,
+    noteMotions: nextMotions,
+    pristineDraftNoteIds: nextPristineDraftNoteIds,
+  };
 }
 
 function sceneToState(scene: PersistedScene): Pick<
@@ -153,6 +193,7 @@ function createInitialState(): Omit<
     zoomAnimation: null,
     saveStatus: 'idle',
     isHydrated: false,
+    pristineDraftNoteIds: {},
   };
 }
 
@@ -188,8 +229,8 @@ export const useCanvasStore = create<CanvasStoreState>()(
           ...current.notes,
           [id]: {
             id,
-            title: 'Untitled note',
-            body: 'Write in **Markdown**.',
+            title: '',
+            body: '',
             x: centeredPosition.x,
             y: centeredPosition.y,
             width: NOTE_WIDTH,
@@ -201,6 +242,10 @@ export const useCanvasStore = create<CanvasStoreState>()(
         },
         selectedNoteId: id,
         nextZ,
+        pristineDraftNoteIds: {
+          ...current.pristineDraftNoteIds,
+          [id]: true,
+        },
       }));
 
       return id;
@@ -214,6 +259,16 @@ export const useCanvasStore = create<CanvasStoreState>()(
           return state;
         }
 
+        const nextPristineDraftNoteIds = { ...state.pristineDraftNoteIds };
+        const titleChanged =
+          patch.title !== undefined && patch.title !== note.title;
+        const bodyChanged =
+          patch.body !== undefined && patch.body !== note.body;
+
+        if (titleChanged || bodyChanged) {
+          delete nextPristineDraftNoteIds[id];
+        }
+
         return {
           notes: {
             ...state.notes,
@@ -223,43 +278,13 @@ export const useCanvasStore = create<CanvasStoreState>()(
               updatedAt: Date.now(),
             },
           },
+          pristineDraftNoteIds: nextPristineDraftNoteIds,
         };
       });
     },
 
     deleteNote: (id) => {
-      set((state) => {
-        if (!state.notes[id]) {
-          return state;
-        }
-
-        const nextNotes = { ...state.notes };
-        const nextConnections = { ...state.connections };
-        const nextMotions = { ...state.noteMotions };
-        delete nextNotes[id];
-        delete nextMotions[id];
-
-        for (const connection of Object.values(state.connections)) {
-          if (connection.from === id || connection.to === id) {
-            delete nextConnections[connection.id];
-          }
-        }
-
-        return {
-          notes: nextNotes,
-          connections: nextConnections,
-          activeDialog:
-            state.activeDialog?.type === 'note' && state.activeDialog.noteId === id
-              ? null
-              : state.activeDialog,
-          selectedNoteId:
-            state.selectedNoteId === id ? null : state.selectedNoteId,
-          linkingFromId: state.linkingFromId === id ? null : state.linkingFromId,
-          draggingNoteId:
-            state.draggingNoteId === id ? null : state.draggingNoteId,
-          noteMotions: nextMotions,
-        };
-      });
+      set((state) => removeNoteFromState(state, id));
     },
 
     deleteSelectedNote: () => {
@@ -485,7 +510,20 @@ export const useCanvasStore = create<CanvasStoreState>()(
     },
 
     closeDialog: () => {
-      set({ activeDialog: null });
+      set((state) => {
+        if (
+          state.activeDialog?.type === 'note' &&
+          state.pristineDraftNoteIds[state.activeDialog.noteId]
+        ) {
+          const note = state.notes[state.activeDialog.noteId];
+
+          if (note && isBlankNote(note)) {
+            return removeNoteFromState(state, note.id);
+          }
+        }
+
+        return { activeDialog: null };
+      });
     },
 
     toggleSettingsNote: () => {
@@ -527,6 +565,7 @@ export const useCanvasStore = create<CanvasStoreState>()(
         zoomAnimation: null,
         saveStatus: 'idle',
         isHydrated: true,
+        pristineDraftNoteIds: {},
       });
     },
 
@@ -638,5 +677,6 @@ export function resetCanvasStore(scene?: PersistedScene): void {
     ...(scene ? sceneToState(scene) : sceneToState(createDefaultScene())),
     viewport: DEFAULT_VIEWPORT,
     isHydrated: true,
+    pristineDraftNoteIds: {},
   });
 }
