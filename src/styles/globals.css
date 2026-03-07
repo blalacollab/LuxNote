@@ -1,0 +1,68 @@
+:root {
+  color-scheme: dark;
+  --color-bg: #07090b;
+  --color-bg-soft: #11171d;
+  --color-surface: rgba(16, 22, 28, 0.82);
+  --color-border: rgba(171, 224, 236, 0.12);
+  --color-text: #effaff;
+  --color-text-soft: rgba(217, 233, 238, 0.76);
+  --color-accent: #91f1ff;
+  --color-warm: #ffb779;
+  --font-display:
+    'Avenir Next Condensed',
+    'DIN Alternate',
+    'Bahnschrift',
+    'PingFang SC',
+    'Noto Sans SC',
+    sans-serif;
+  --font-body:
+    'Avenir Next',
+    'SF Pro Display',
+    'PingFang SC',
+    'Noto Sans SC',
+    'Microsoft YaHei',
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+  overflow: hidden;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+}
+
+a {
+  color: inherit;
+}
+
+::selection {
+  background: rgba(145, 241, 255, 0.28);
+}
+
+.canvas-stage {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
