@@ -22,6 +22,35 @@ export function useCanvasHotkeys(): boolean {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      const store = useCanvasStore.getState();
+
+      if (event.code === 'Escape') {
+        if (store.activeDialog) {
+          event.preventDefault();
+          store.closeDialog();
+          return;
+        }
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.code === 'KeyN') {
+        event.preventDefault();
+        const id = store.createNote();
+        store.openNoteDialog(id);
+        return;
+      }
+
+      if (event.code === 'Slash' && event.shiftKey) {
+        event.preventDefault();
+        store.toggleSettingsNote();
+        return;
+      }
+
+      if ((event.ctrlKey || event.metaKey) && event.code === 'Comma') {
+        event.preventDefault();
+        store.toggleSettingsNote();
+        return;
+      }
+
       if (event.code === 'Space') {
         if (!isTypingTarget(event.target)) {
           event.preventDefault();
@@ -34,13 +63,17 @@ export function useCanvasHotkeys(): boolean {
         return;
       }
 
-      const store = useCanvasStore.getState();
-
       switch (event.code) {
-        case 'KeyN':
-          if (!event.repeat) {
+        case 'KeyP':
+          if (store.selectedNoteId) {
             event.preventDefault();
-            store.createNote();
+            store.focusNote(store.selectedNoteId);
+          }
+          break;
+        case 'Enter':
+          if (store.selectedNoteId && !event.repeat) {
+            event.preventDefault();
+            store.openNoteDialog(store.selectedNoteId);
           }
           break;
         case 'Delete':
@@ -53,6 +86,9 @@ export function useCanvasHotkeys(): boolean {
         case 'Escape':
           store.cancelLink();
           store.selectNote(null);
+          if (store.settingsNoteVisible) {
+            store.toggleSettingsNote();
+          }
           setSpacePressed(false);
           break;
         default:

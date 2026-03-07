@@ -16,6 +16,7 @@ interface NoteCardProps {
   linkingFromId: string | null;
   spacePressed: boolean;
   toWorld: (clientX: number, clientY: number) => Vec2;
+  isSystem?: boolean;
 }
 
 interface DragSession {
@@ -23,6 +24,7 @@ interface DragSession {
   lastWorld: Vec2;
   lastTime: number;
   velocity: NoteMotion;
+  moved: boolean;
 }
 
 function clampVelocity(value: number): number {
@@ -43,8 +45,10 @@ export function NoteCard({
   linkingFromId,
   spacePressed,
   toWorld,
+  isSystem = false,
 }: NoteCardProps) {
   const dragRef = useRef<DragSession | null>(null);
+  const suppressOpenRef = useRef(false);
   const preview = useMemo(() => toPreviewText(note.body).slice(0, 160), [note.body]);
   const compact = camera.zoom < 0.72;
   const x = (note.x - camera.x) * camera.zoom + viewport.width / 2;
@@ -56,8 +60,11 @@ export function NoteCard({
   const setDraggingNoteId = useCanvasStore((state) => state.setDraggingNoteId);
   const setNoteMotion = useCanvasStore((state) => state.setNoteMotion);
   const beginLink = useCanvasStore((state) => state.beginLink);
+  const cancelLink = useCanvasStore((state) => state.cancelLink);
   const completeLink = useCanvasStore((state) => state.completeLink);
   const deleteNote = useCanvasStore((state) => state.deleteNote);
+  const openNoteDialog = useCanvasStore((state) => state.openNoteDialog);
+  const openSettingsDialog = useCanvasStore((state) => state.openSettingsDialog);
 
   const finishDrag = (pointerId: number) => {
     const session = dragRef.current;
@@ -67,19 +74,19 @@ export function NoteCard({
     }
 
     dragRef.current = null;
+    suppressOpenRef.current = session.moved;
     setDraggingNoteId(null);
     setNoteMotion(note.id, shouldStopMotion(session.velocity) ? null : session.velocity);
   };
 
   const handlePointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (spacePressed || event.button !== 0) {
+    if (spacePressed || event.button !== 0 || isSystem) {
       return;
     }
 
-    if (linkingFromId && linkingFromId !== note.id) {
+    if (linkingFromId) {
       event.preventDefault();
       event.stopPropagation();
-      completeLink(note.id);
       return;
     }
 
@@ -92,6 +99,7 @@ export function NoteCard({
         vx: 0,
         vy: 0,
       },
+      moved: false,
     };
     bringToFront(note.id);
     selectNote(note.id);
@@ -119,6 +127,9 @@ export function NoteCard({
       vx: clampVelocity(delta.x / dt),
       vy: clampVelocity(delta.y / dt),
     };
+    if (Math.abs(delta.x) > 1 || Math.abs(delta.y) > 1) {
+      session.moved = true;
+    }
     session.lastWorld = world;
     session.lastTime = event.timeStamp;
   };
@@ -134,12 +145,29 @@ export function NoteCard({
   };
 
   const handleCardClick = () => {
-    if (linkingFromId && linkingFromId !== note.id) {
-      completeLink(note.id);
+    if (linkingFromId) {
+      if (linkingFromId === note.id) {
+        cancelLink();
+        selectNote(note.id);
+      } else {
+        completeLink(note.id);
+      }
+      return;
+    }
+
+    if (suppressOpenRef.current) {
+      suppressOpenRef.current = false;
+      selectNote(note.id);
+      return;
+    }
+
+    if (isSystem) {
+      openSettingsDialog();
       return;
     }
 
     selectNote(note.id);
+    openNoteDialog(note.id);
   };
 
   const className = [
@@ -154,6 +182,7 @@ export function NoteCard({
 
   return (
     <article
+      data-note-card="true"
       className={className}
       style={{
         transform: `translate3d(${x}px, ${y}px, 0) scale(${camera.zoom})`,
@@ -168,47 +197,74 @@ export function NoteCard({
     >
       <header className={styles.header}>
         <div className={styles.titleGroup}>
-          <p className={styles.eyebrow}>Field Note</p>
+          <p className={styles.eyebrow}>{isSystem ? 'Hidden Entry' : 'Field Note'}</p>
           <h3 className={styles.title}>{note.title}</h3>
         </div>
-        <div className={styles.actions}>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Create link from note"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              beginLink(note.id);
-            }}
-          >
-            ⤳
-          </button>
-          <button
-            type="button"
-            className={styles.iconButton}
-            aria-label="Delete note"
-            onPointerDown={(event) => event.stopPropagation()}
-            onClick={(event) => {
-              event.stopPropagation();
-              deleteNote(note.id);
-            }}
-          >
-            ×
-          </button>
-        </div>
+        {!isSystem ? (
+          <div className={styles.actions}>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label="Create link from note"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                if (linkingFromId && linkingFromId !== note.id) {
+                  completeLink(note.id);
+                  return;
+                }
+
+                if (isLinkSource) {
+                  cancelLink();
+                  return;
+                }
+
+                beginLink(note.id);
+              }}
+            >
+              {isLinkSource ? '•' : '⤳'}
+            </button>
+            <button
+              type="button"
+              className={styles.iconButton}
+              aria-label="Delete note"
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                deleteNote(note.id);
+              }}
+            >
+              ×
+            </button>
+          </div>
+        ) : null}
       </header>
 
       <div className={styles.body}>
-        <div className={styles.meta}>
-          <span>{Math.round(note.x)}</span>
-          <span>/</span>
-          <span>{Math.round(note.y)}</span>
-        </div>
+        {!isSystem ? (
+          <div className={styles.meta}>
+            <span>{Math.round(note.x)}</span>
+            <span>/</span>
+            <span>{Math.round(note.y)}</span>
+          </div>
+        ) : (
+          <div className={styles.meta}>
+            <span>Press Enter</span>
+            <span>/</span>
+            <span>Open Manual</span>
+          </div>
+        )}
         <p className={styles.snippet}>{preview || 'Empty note'}</p>
         <footer className={styles.footer}>
           <span className={styles.pulse} />
-          <span>{new Date(note.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          <span>
+            {isSystem
+              ? 'Settings / Help'
+              : new Date(note.updatedAt).toLocaleTimeString([], {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+          </span>
         </footer>
       </div>
     </article>

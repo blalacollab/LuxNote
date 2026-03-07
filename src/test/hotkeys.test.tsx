@@ -23,16 +23,16 @@ describe('useCanvasHotkeys', () => {
     resetCanvasStore(createDefaultScene());
   });
 
-  it('creates a note when pressing N outside editable fields', async () => {
+  it('creates a note when pressing Ctrl+N outside editable fields', async () => {
     const user = userEvent.setup();
     render(<HotkeyHarness />);
 
     expect(screen.getByLabelText('note-count')).toHaveTextContent('3');
-    await user.keyboard('n');
+    await user.keyboard('{Control>}n{/Control}');
     expect(screen.getByLabelText('note-count')).toHaveTextContent('4');
   });
 
-  it('ignores note creation while typing into a textarea', async () => {
+  it('ignores plain typing while focused in a textarea', async () => {
     const user = userEvent.setup();
     render(<HotkeyHarness />);
 

@@ -15,6 +15,7 @@ import { stepInertia } from '../lib/physics';
 import { createDefaultScene } from '../lib/seed';
 import type {
   CameraState,
+  CanvasPreferences,
   ConnectionRecord,
   NoteMotion,
   NoteRecord,
@@ -24,6 +25,16 @@ import type {
 } from '../lib/types';
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
+
+type DialogState =
+  | {
+      type: 'note';
+      noteId: string;
+    }
+  | {
+      type: 'settings';
+    }
+  | null;
 
 interface ZoomAnimation {
   targetZoom: number;
@@ -36,9 +47,12 @@ interface CanvasStoreState {
   viewport: ViewportSize;
   notes: Record<string, NoteRecord>;
   connections: Record<string, ConnectionRecord>;
+  preferences: CanvasPreferences;
   selectedNoteId: string | null;
   linkingFromId: string | null;
   draggingNoteId: string | null;
+  activeDialog: DialogState;
+  settingsNoteVisible: boolean;
   noteMotions: Record<string, NoteMotion>;
   zoomAnimation: ZoomAnimation | null;
   nextZ: number;
@@ -61,6 +75,11 @@ interface CanvasStoreState {
   animateZoomAt: (factor: number, anchorScreen: Vec2) => void;
   resetCamera: () => void;
   focusNote: (id: string) => void;
+  openNoteDialog: (id: string) => void;
+  openSettingsDialog: () => void;
+  closeDialog: () => void;
+  toggleSettingsNote: () => void;
+  setHudVisible: (visible: boolean) => void;
   setSaveStatus: (status: SaveStatus) => void;
   hydrate: (scene: PersistedScene | null) => void;
   getSnapshot: () => PersistedScene;
@@ -75,12 +94,15 @@ function computeNextZ(notes: Record<string, NoteRecord>): number {
 
 function sceneToState(scene: PersistedScene): Pick<
   CanvasStoreState,
-  'camera' | 'notes' | 'connections' | 'nextZ'
+  'camera' | 'notes' | 'connections' | 'nextZ' | 'preferences'
 > {
   return {
     camera: scene.camera,
     notes: scene.notes,
     connections: scene.connections,
+    preferences: scene.preferences ?? {
+      hudVisible: true,
+    },
     nextZ: computeNextZ(scene.notes),
   };
 }
@@ -104,6 +126,11 @@ function createInitialState(): Omit<
   | 'animateZoomAt'
   | 'resetCamera'
   | 'focusNote'
+  | 'openNoteDialog'
+  | 'openSettingsDialog'
+  | 'closeDialog'
+  | 'toggleSettingsNote'
+  | 'setHudVisible'
   | 'setSaveStatus'
   | 'hydrate'
   | 'getSnapshot'
@@ -114,9 +141,14 @@ function createInitialState(): Omit<
   return {
     ...sceneToState(scene),
     viewport: DEFAULT_VIEWPORT,
+    preferences: {
+      hudVisible: true,
+    },
     selectedNoteId: null,
     linkingFromId: null,
     draggingNoteId: null,
+    activeDialog: null,
+    settingsNoteVisible: false,
     noteMotions: {},
     zoomAnimation: null,
     saveStatus: 'idle',
@@ -126,13 +158,14 @@ function createInitialState(): Omit<
 
 export function buildSnapshot(state: Pick<
   CanvasStoreState,
-  'camera' | 'notes' | 'connections'
+  'camera' | 'notes' | 'connections' | 'preferences'
 >): PersistedScene {
   return {
     version: 1,
     camera: state.camera,
     notes: state.notes,
     connections: state.connections,
+    preferences: state.preferences,
   };
 }
 
@@ -215,6 +248,10 @@ export const useCanvasStore = create<CanvasStoreState>()(
         return {
           notes: nextNotes,
           connections: nextConnections,
+          activeDialog:
+            state.activeDialog?.type === 'note' && state.activeDialog.noteId === id
+              ? null
+              : state.activeDialog,
           selectedNoteId:
             state.selectedNoteId === id ? null : state.selectedNoteId,
           linkingFromId: state.linkingFromId === id ? null : state.linkingFromId,
@@ -420,6 +457,56 @@ export const useCanvasStore = create<CanvasStoreState>()(
       });
     },
 
+    openNoteDialog: (id) => {
+      set((state) => {
+        if (!state.notes[id]) {
+          return state;
+        }
+
+        return {
+          activeDialog: {
+            type: 'note',
+            noteId: id,
+          },
+          linkingFromId: null,
+          selectedNoteId: id,
+        };
+      });
+    },
+
+    openSettingsDialog: () => {
+      set({
+        activeDialog: {
+          type: 'settings',
+        },
+        linkingFromId: null,
+        settingsNoteVisible: false,
+      });
+    },
+
+    closeDialog: () => {
+      set({ activeDialog: null });
+    },
+
+    toggleSettingsNote: () => {
+      set((state) => ({
+        settingsNoteVisible: !state.settingsNoteVisible,
+        activeDialog:
+          state.activeDialog?.type === 'settings' && state.settingsNoteVisible
+            ? null
+            : state.activeDialog,
+      }));
+    },
+
+    setHudVisible: (visible) => {
+      set((state) => ({
+        preferences: {
+          ...state.preferences,
+          hudVisible: visible,
+        },
+      }));
+    },
+
     setSaveStatus: (status) => {
       set({ saveStatus: status });
     },
@@ -434,6 +521,8 @@ export const useCanvasStore = create<CanvasStoreState>()(
         selectedNoteId: null,
         linkingFromId: null,
         draggingNoteId: null,
+        activeDialog: null,
+        settingsNoteVisible: false,
         noteMotions: {},
         zoomAnimation: null,
         saveStatus: 'idle',

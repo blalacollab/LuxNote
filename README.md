@@ -1,12 +1,12 @@
 # LuxNote
 
-LuxNote is a local-first infinite canvas notes app built with React, TypeScript, Zustand, and PixiJS. It uses a dark sci-fi visual language inspired by tactile floating-card motion systems, while keeping all brand assets, copy, imagery, and structure original.
+LuxNote is a local-first infinite canvas notes app built with React, TypeScript, Zustand, and a Canvas 2D rendering layer. It uses a dark sci-fi visual language inspired by tactile floating-card motion systems, while keeping all brand assets, copy, imagery, and structure original.
 
 ## Stack
 
 - React + TypeScript + Vite
 - Zustand for scene and interaction state
-- PixiJS for WebGL grid and connection rendering
+- Canvas 2D for grid and connection rendering
 - CSS variables + CSS Modules
 - IndexedDB with localStorage fallback
 - Vitest + Testing Library
@@ -33,18 +33,23 @@ npm run test
 
 ## Shortcuts
 
-- `N`: create a new note at the camera center
-- `Space + Drag`: pan the infinite canvas
-- `Ctrl/Cmd + Wheel`: zoom around the cursor
+- `Ctrl/Cmd + N`: create a new note and open the editor
+- `Double Click`: create a note at the pointer position
+- `Drag Background`: pan the infinite canvas directly with the mouse
+- `Wheel`: zoom around the cursor
+- `Space + Drag`: auxiliary panning for laptop and trackpad use
 - `Delete` / `Backspace`: delete the selected note
-- `Escape`: clear selection and exit link mode
+- `Enter`: open the selected note in the fullscreen editor
+- `P`: focus the selected note
+- `Shift + /`: reveal the hidden settings note
+- `Escape`: exit the fullscreen editor, clear selection, or leave link mode
 
 ## Architecture
 
 ### Rendering split
 
-- `PixiJS` draws the background grid, axis highlights, and connection lines.
-- `React DOM` renders only the visible note cards and the Markdown inspector.
+- `CanvasStage` draws the background grid and connection lines on a single canvas layer.
+- `React DOM` renders only the visible note cards, the hidden settings note, and the fullscreen note editor.
 - This hybrid avoids expensive DOM work for vector layers while keeping note editing accessible and straightforward.
 
 ### Scene model
@@ -63,8 +68,9 @@ npm run test
 
 - Only notes inside the camera bounds plus overscan are mounted.
 - Each frame update is driven by `requestAnimationFrame`, but state writes happen only when note inertia or zoom animation is active.
-- WebGL draws the dense grid and all visible connection curves efficiently.
+- Canvas 2D draws the dense grid and all visible connection curves without forcing every note into the DOM tree.
 - Card motion uses lightweight per-note velocity values instead of rerendering hidden notes.
+- Background panning uses a drag threshold and `requestAnimationFrame` batching inspired by canvas-oriented interaction systems.
 - Save writes are debounced to reduce IndexedDB churn during drag sessions.
 
 ## Project structure
@@ -106,10 +112,12 @@ src/
 - [x] Infinite canvas pan and zoom with cursor-centered scaling
 - [x] Create, edit, and delete Markdown notes
 - [x] Dragging raises card order and applies inertia after release
-- [x] Card-to-card connections with Pixi-rendered curves
-- [x] Keyboard shortcuts for creation, deletion, panning, and zooming
+- [x] Card-to-card connections with canvas-rendered curves
+- [x] Mouse-first pan, zoom, note selection, and note dragging
+- [x] Keyboard shortcuts for auxiliary actions and fast creation
 - [x] Auto-save and restore with IndexedDB fallback
 - [x] Visible-note culling for large boards
+- [x] Fullscreen note editor with WYSIWYG-style rich text surface backed by Markdown
 - [x] Core interaction tests with Vitest + Testing Library
 
 ## Next iterations

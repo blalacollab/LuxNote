@@ -12,8 +12,9 @@ export function createDefaultScene(): PersistedScene {
         '# Infinite canvas',
         '',
         '- Drag cards to re-layout ideas',
-        '- Hold `Space` then drag to pan',
-        '- `Ctrl/Cmd + wheel` zooms to cursor',
+        '- Drag the background to pan the board',
+        '- Use the wheel to zoom around the cursor',
+        '- Press `Ctrl/Cmd + N` or double click to open a new note',
       ].join('\n'),
       x: -420,
       y: -140,
@@ -81,5 +82,8 @@ export function createDefaultScene(): PersistedScene {
     connections: Object.fromEntries(
       connections.map((connection) => [connection.id, connection]),
     ),
+    preferences: {
+      hudVisible: true,
+    },
   };
 }

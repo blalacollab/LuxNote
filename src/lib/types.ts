@@ -32,11 +32,16 @@ export interface ConnectionRecord {
   createdAt: number;
 }
 
+export interface CanvasPreferences {
+  hudVisible: boolean;
+}
+
 export interface PersistedScene {
   version: 1;
   camera: CameraState;
   notes: Record<string, NoteRecord>;
   connections: Record<string, ConnectionRecord>;
+  preferences?: CanvasPreferences;
 }
 
 export interface NoteMotion {

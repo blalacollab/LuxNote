@@ -1,4 +1,3 @@
-import { Application, Container, Graphics } from 'pixi.js';
 import { useEffect, useRef } from 'react';
 
 import { GRID_MAJOR, GRID_MINOR } from '../lib/constants';
@@ -21,12 +20,10 @@ interface CanvasStageProps {
 }
 
 function drawGrid(
-  graphics: Graphics,
+  ctx: CanvasRenderingContext2D,
   camera: CameraState,
   viewport: ViewportSize,
 ): void {
-  graphics.clear();
-
   const worldLeft = camera.x - viewport.width / (2 * camera.zoom);
   const worldRight = camera.x + viewport.width / (2 * camera.zoom);
   const worldTop = camera.y - viewport.height / (2 * camera.zoom);
@@ -37,43 +34,48 @@ function drawGrid(
   const majorStartX = Math.floor(worldLeft / GRID_MAJOR) * GRID_MAJOR;
   const majorStartY = Math.floor(worldTop / GRID_MAJOR) * GRID_MAJOR;
 
-  graphics.lineStyle(1, 0x27414a, 0.12);
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.strokeStyle = 'rgba(39, 65, 74, 0.16)';
+  ctx.beginPath();
 
   for (let x = minorStartX; x < worldRight + GRID_MINOR; x += GRID_MINOR) {
     const screenX = (x - camera.x) * camera.zoom + viewport.width / 2;
-    graphics.moveTo(screenX, 0);
-    graphics.lineTo(screenX, viewport.height);
+    ctx.moveTo(screenX, 0);
+    ctx.lineTo(screenX, viewport.height);
   }
 
   for (let y = minorStartY; y < worldBottom + GRID_MINOR; y += GRID_MINOR) {
     const screenY = (y - camera.y) * camera.zoom + viewport.height / 2;
-    graphics.moveTo(0, screenY);
-    graphics.lineTo(viewport.width, screenY);
+    ctx.moveTo(0, screenY);
+    ctx.lineTo(viewport.width, screenY);
   }
 
-  graphics.lineStyle(1.5, 0x4e8996, 0.16);
+  ctx.stroke();
+
+  ctx.lineWidth = 1.4;
+  ctx.strokeStyle = 'rgba(78, 137, 150, 0.2)';
+  ctx.beginPath();
 
   for (let x = majorStartX; x < worldRight + GRID_MAJOR; x += GRID_MAJOR) {
     const screenX = (x - camera.x) * camera.zoom + viewport.width / 2;
-    graphics.moveTo(screenX, 0);
-    graphics.lineTo(screenX, viewport.height);
+    ctx.moveTo(screenX, 0);
+    ctx.lineTo(screenX, viewport.height);
   }
 
   for (let y = majorStartY; y < worldBottom + GRID_MAJOR; y += GRID_MAJOR) {
     const screenY = (y - camera.y) * camera.zoom + viewport.height / 2;
-    graphics.moveTo(0, screenY);
-    graphics.lineTo(viewport.width, screenY);
+    ctx.moveTo(0, screenY);
+    ctx.lineTo(viewport.width, screenY);
   }
 
-  graphics.lineStyle(2, 0x91f1ff, 0.18);
-  graphics.moveTo(viewport.width / 2, 0);
-  graphics.lineTo(viewport.width / 2, viewport.height);
-  graphics.moveTo(0, viewport.height / 2);
-  graphics.lineTo(viewport.width, viewport.height / 2);
+  ctx.stroke();
+
+  ctx.restore();
 }
 
 function drawConnections(
-  graphics: Graphics,
+  ctx: CanvasRenderingContext2D,
   camera: CameraState,
   viewport: ViewportSize,
   notes: Record<string, NoteRecord>,
@@ -81,8 +83,6 @@ function drawConnections(
   selectedNoteId: string | null,
   linkingFromId: string | null,
 ): void {
-  graphics.clear();
-
   for (const connection of Object.values(connections)) {
     const from = notes[connection.from];
     const to = notes[connection.to];
@@ -118,32 +118,36 @@ function drawConnections(
       connection.from === linkingFromId ||
       connection.to === linkingFromId;
 
-    graphics.lineStyle(5, 0x5fc8dd, isActive ? 0.22 : 0.1);
-    graphics.moveTo(start.x, start.y);
-    graphics.bezierCurveTo(
-      start.x + (end.x - start.x) * 0.25,
-      start.y,
-      start.x + (end.x - start.x) * 0.75,
-      end.y,
-      end.x,
-      end.y,
-    );
+    const cp1x = start.x + (end.x - start.x) * 0.25;
+    const cp2x = start.x + (end.x - start.x) * 0.75;
 
-    graphics.lineStyle(1.4, isActive ? 0xe7fdff : 0x92ddea, isActive ? 0.74 : 0.38);
-    graphics.moveTo(start.x, start.y);
-    graphics.bezierCurveTo(
-      start.x + (end.x - start.x) * 0.25,
-      start.y,
-      start.x + (end.x - start.x) * 0.75,
-      end.y,
-      end.x,
-      end.y,
-    );
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.bezierCurveTo(cp1x, start.y, cp2x, end.y, end.x, end.y);
+    ctx.lineWidth = 5;
+    ctx.strokeStyle = isActive
+      ? 'rgba(95, 200, 221, 0.24)'
+      : 'rgba(95, 200, 221, 0.1)';
+    ctx.stroke();
 
-    graphics.beginFill(isActive ? 0xe7fdff : 0x92ddea, isActive ? 0.9 : 0.42);
-    graphics.drawCircle(start.x, start.y, isActive ? 3.4 : 2.4);
-    graphics.drawCircle(end.x, end.y, isActive ? 3.4 : 2.4);
-    graphics.endFill();
+    ctx.beginPath();
+    ctx.moveTo(start.x, start.y);
+    ctx.bezierCurveTo(cp1x, start.y, cp2x, end.y, end.x, end.y);
+    ctx.lineWidth = 1.5;
+    ctx.strokeStyle = isActive
+      ? 'rgba(231, 253, 255, 0.78)'
+      : 'rgba(146, 221, 234, 0.42)';
+    ctx.stroke();
+
+    ctx.fillStyle = isActive
+      ? 'rgba(231, 253, 255, 0.96)'
+      : 'rgba(146, 221, 234, 0.48)';
+    ctx.beginPath();
+    ctx.arc(start.x, start.y, isActive ? 3.4 : 2.4, 0, Math.PI * 2);
+    ctx.arc(end.x, end.y, isActive ? 3.4 : 2.4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
   }
 }
 
@@ -156,9 +160,6 @@ export function CanvasStage({
   linkingFromId,
 }: CanvasStageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const appRef = useRef<Application | null>(null);
-  const gridRef = useRef<Graphics | null>(null);
-  const lineRef = useRef<Graphics | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -167,55 +168,29 @@ export function CanvasStage({
       return;
     }
 
-    const app = new Application({
-      view: canvas,
-      antialias: true,
-      autoDensity: true,
-      backgroundAlpha: 0,
-      resolution: window.devicePixelRatio || 1,
-    });
-    const stage = new Container();
-    const grid = new Graphics();
-    const lines = new Graphics();
-    stage.addChild(grid, lines);
-    app.stage.addChild(stage);
-    app.renderer.resize(viewport.width || 1, viewport.height || 1);
+    const width = Math.max(1, Math.floor(viewport.width));
+    const height = Math.max(1, Math.floor(viewport.height));
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(width * dpr);
+    canvas.height = Math.floor(height * dpr);
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
 
-    appRef.current = app;
-    gridRef.current = grid;
-    lineRef.current = lines;
+    const ctx = canvas.getContext('2d');
 
-    return () => {
-      app.destroy(true, { children: true });
-      appRef.current = null;
-      gridRef.current = null;
-      lineRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    const app = appRef.current;
-
-    if (!app) {
+    if (!ctx) {
       return;
     }
 
-    app.renderer.resize(Math.max(viewport.width, 1), Math.max(viewport.height, 1));
-  }, [viewport.height, viewport.width]);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
 
-  useEffect(() => {
-    const grid = gridRef.current;
-    const lines = lineRef.current;
-
-    if (!grid || !lines) {
-      return;
-    }
-
-    drawGrid(grid, camera, viewport);
+    drawGrid(ctx, camera, { width, height });
     drawConnections(
-      lines,
+      ctx,
       camera,
-      viewport,
+      { width, height },
       notes,
       connections,
       selectedNoteId,
