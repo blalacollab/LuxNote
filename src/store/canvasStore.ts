@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createWithEqualityFn } from 'zustand/traditional';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 import {
@@ -52,6 +52,7 @@ interface CanvasStoreState {
   linkingFromId: string | null;
   draggingNoteId: string | null;
   activeDialog: DialogState;
+  pendingDeleteNoteId: string | null;
   settingsNoteVisible: boolean;
   noteMotions: Record<string, NoteMotion>;
   zoomAnimation: ZoomAnimation | null;
@@ -63,6 +64,10 @@ interface CanvasStoreState {
   updateNote: (id: string, patch: Partial<Pick<NoteRecord, 'title' | 'body'>>) => void;
   deleteNote: (id: string) => void;
   deleteSelectedNote: () => void;
+  requestDeleteNote: (id: string) => void;
+  requestDeleteSelectedNote: () => void;
+  cancelDeleteRequest: () => void;
+  confirmDeleteRequest: () => void;
   selectNote: (id: string | null) => void;
   setViewport: (viewport: ViewportSize) => void;
   bringToFront: (id: string) => void;
@@ -93,8 +98,23 @@ function computeNextZ(notes: Record<string, NoteRecord>): number {
   );
 }
 
+const INVISIBLE_TEXT_PATTERN =
+  /[\s\u00A0\u1680\u180E\u2000-\u200D\u2028\u2029\u202F\u205F\u3000\uFEFF]/g;
+
+function normalizeForBlankCheck(value: string): string {
+  return value
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/<\/?p>/gi, '')
+    .replace(/&nbsp;/gi, '')
+    .replace(INVISIBLE_TEXT_PATTERN, '');
+}
+
+function isBlankText(value: string): boolean {
+  return normalizeForBlankCheck(value).length === 0;
+}
+
 function isBlankNote(note: Pick<NoteRecord, 'title' | 'body'>): boolean {
-  return note.title.trim() === '' && note.body.trim() === '';
+  return isBlankText(note.title) && isBlankText(note.body);
 }
 
 function removeNoteFromState(state: CanvasStoreState, id: string) {
@@ -124,6 +144,8 @@ function removeNoteFromState(state: CanvasStoreState, id: string) {
       state.activeDialog?.type === 'note' && state.activeDialog.noteId === id
         ? null
         : state.activeDialog,
+    pendingDeleteNoteId:
+      state.pendingDeleteNoteId === id ? null : state.pendingDeleteNoteId,
     selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId,
     linkingFromId: state.linkingFromId === id ? null : state.linkingFromId,
     draggingNoteId: state.draggingNoteId === id ? null : state.draggingNoteId,
@@ -153,6 +175,10 @@ function createInitialState(): Omit<
   | 'updateNote'
   | 'deleteNote'
   | 'deleteSelectedNote'
+  | 'requestDeleteNote'
+  | 'requestDeleteSelectedNote'
+  | 'cancelDeleteRequest'
+  | 'confirmDeleteRequest'
   | 'selectNote'
   | 'setViewport'
   | 'bringToFront'
@@ -188,6 +214,7 @@ function createInitialState(): Omit<
     linkingFromId: null,
     draggingNoteId: null,
     activeDialog: null,
+    pendingDeleteNoteId: null,
     settingsNoteVisible: false,
     noteMotions: {},
     zoomAnimation: null,
@@ -210,7 +237,7 @@ export function buildSnapshot(state: Pick<
   };
 }
 
-export const useCanvasStore = create<CanvasStoreState>()(
+export const useCanvasStore = createWithEqualityFn<CanvasStoreState>()(
   subscribeWithSelector((set, get) => ({
     ...createInitialState(),
 
@@ -259,13 +286,28 @@ export const useCanvasStore = create<CanvasStoreState>()(
           return state;
         }
 
-        const nextPristineDraftNoteIds = { ...state.pristineDraftNoteIds };
-        const titleChanged =
-          patch.title !== undefined && patch.title !== note.title;
-        const bodyChanged =
-          patch.body !== undefined && patch.body !== note.body;
+        const hasTitlePatch = patch.title !== undefined;
+        const hasBodyPatch = patch.body !== undefined;
 
-        if (titleChanged || bodyChanged) {
+        if (!hasTitlePatch && !hasBodyPatch) {
+          return state;
+        }
+
+        const nextTitle = hasTitlePatch ? patch.title! : note.title;
+        const nextBody = hasBodyPatch ? patch.body! : note.body;
+        const noteChanged = nextTitle !== note.title || nextBody !== note.body;
+
+        if (!noteChanged) {
+          return state;
+        }
+
+        const nextPristineDraftNoteIds = { ...state.pristineDraftNoteIds };
+        const wasSemanticallyBlank =
+          isBlankText(note.title) && isBlankText(note.body);
+        const isSemanticallyBlank =
+          isBlankText(nextTitle) && isBlankText(nextBody);
+
+        if (!(wasSemanticallyBlank && isSemanticallyBlank)) {
           delete nextPristineDraftNoteIds[id];
         }
 
@@ -274,7 +316,8 @@ export const useCanvasStore = create<CanvasStoreState>()(
             ...state.notes,
             [id]: {
               ...note,
-              ...patch,
+              title: nextTitle,
+              body: nextBody,
               updatedAt: Date.now(),
             },
           },
@@ -293,6 +336,43 @@ export const useCanvasStore = create<CanvasStoreState>()(
       if (id) {
         get().deleteNote(id);
       }
+    },
+
+    requestDeleteNote: (id) => {
+      if (!get().notes[id]) {
+        return;
+      }
+
+      set({
+        pendingDeleteNoteId: id,
+      });
+    },
+
+    requestDeleteSelectedNote: () => {
+      const id = get().selectedNoteId;
+
+      if (id) {
+        get().requestDeleteNote(id);
+      }
+    },
+
+    cancelDeleteRequest: () => {
+      set({
+        pendingDeleteNoteId: null,
+      });
+    },
+
+    confirmDeleteRequest: () => {
+      const id = get().pendingDeleteNoteId;
+
+      if (!id) {
+        return;
+      }
+
+      set({
+        pendingDeleteNoteId: null,
+      });
+      get().deleteNote(id);
     },
 
     selectNote: (id) => {

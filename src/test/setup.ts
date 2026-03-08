@@ -1,4 +1,8 @@
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+vi.mock('../modules/outline-editor/runtime', async () => import('./outlineEditorMock'));
+vi.mock('../modules/outline-editor/styles', () => ({}));
 
 class ResizeObserverMock {
   observe() {}
@@ -85,6 +89,7 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
       arc() {},
       bezierCurveTo() {},
       clearRect() {},
+      drawImage() {},
       scale() {},
       setTransform() {},
       lineWidth: 1,

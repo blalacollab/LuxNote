@@ -43,6 +43,12 @@ export function useCanvasHotkeys(): boolean {
       const store = useCanvasStore.getState();
 
       if (event.code === 'Escape') {
+        if (store.pendingDeleteNoteId) {
+          event.preventDefault();
+          store.cancelDeleteRequest();
+          return;
+        }
+
         if (store.activeDialog) {
           event.preventDefault();
           store.closeDialog();
@@ -98,7 +104,7 @@ export function useCanvasHotkeys(): boolean {
         case 'Backspace':
           if (store.selectedNoteId) {
             event.preventDefault();
-            store.deleteSelectedNote();
+            store.requestDeleteSelectedNote();
           }
           break;
         case 'Escape':

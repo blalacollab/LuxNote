@@ -7,9 +7,11 @@ LuxNote is a local-first infinite canvas notes app built with React, TypeScript,
 - React + TypeScript + Vite
 - Zustand for scene and interaction state
 - Canvas 2D for grid and connection rendering
+- In-repo `src/modules/outline-editor` module for the fullscreen document editor
 - CSS variables + CSS Modules
 - IndexedDB with localStorage fallback
 - Vitest + Testing Library
+- Third-party license notices tracked in `THIRD_PARTY_NOTICES.md`
 
 ## Run
 
@@ -49,29 +51,33 @@ npm run test
 ### Rendering split
 
 - `CanvasStage` draws the background grid and connection lines on a single canvas layer.
-- `React DOM` renders only the visible note cards, the hidden settings note, and the fullscreen note editor.
-- This hybrid avoids expensive DOM work for vector layers while keeping note editing accessible and straightforward.
+- `React DOM` renders only the visible note cards, the hidden settings note, and the fullscreen note shell.
+- The note shell hosts the local `outline-editor` module for Markdown-first WYSIWYG editing while LuxNote keeps title, tags, and persistence outside the editor runtime.
+- This hybrid avoids expensive DOM work for vector layers while keeping document editing rich and predictable.
 
 ### Scene model
 
 - `src/store/canvasStore.ts` owns camera state, notes, links, z-order, drag inertia, zoom animation, and hydration state.
 - Notes store world coordinates, fixed dimensions, timestamps, and stacking order.
 - Links store note-to-note relationships using stable deterministic ids.
+- `NoteRecord.title` and `NoteRecord.body` stay unchanged; the editor only replaces the body editing surface.
 
 ### Persistence
 
 - `src/hooks/useScenePersistence.ts` hydrates the scene on boot.
 - Every persisted scene change is debounced and written to IndexedDB.
 - When IndexedDB is unavailable or fails, localStorage is used as a fallback.
+- The fullscreen editor flushes Markdown back into Zustand before close, blur, and unmount so editor state and persisted state stay aligned.
 
 ### Performance choices
 
 - Only notes inside the camera bounds plus overscan are mounted.
-- Each frame update is driven by `requestAnimationFrame`, but state writes happen only when note inertia or zoom animation is active.
+- The animation loop starts only when note inertia or zoom animation is active, and stops immediately when the scene is idle.
 - Canvas 2D draws the dense grid and all visible connection curves without forcing every note into the DOM tree.
 - Card motion uses lightweight per-note velocity values instead of rerendering hidden notes.
 - Background panning uses a drag threshold and `requestAnimationFrame` batching inspired by canvas-oriented interaction systems.
 - Save writes are debounced to reduce IndexedDB churn during drag sessions.
+- The fullscreen editor runtime and styles are lazy-loaded, so the initial canvas route is not blocked by editor payload.
 
 ## Project structure
 
@@ -82,8 +88,9 @@ src/
     App.module.css
   components/
     CanvasStage.tsx
-    InspectorPanel.tsx
+    CanvasDialog.tsx
     NoteCard.tsx
+    OutlineNoteEditor.tsx
   hooks/
     useAnimationLoop.ts
     useCanvasHotkeys.ts
@@ -93,7 +100,9 @@ src/
     camera.ts
     constants.ts
     ids.ts
-    markdown.ts
+    markdownDialect.ts
+    outlineI18n.ts
+    outlineTheme.ts
     persistence.ts
     physics.ts
     seed.ts
@@ -104,7 +113,14 @@ src/
   test/
     camera.test.ts
     hotkeys.test.tsx
+    outlineNoteEditor.test.tsx
+    noteInteractions.test.tsx
     viewport.test.ts
+  modules/
+    outline-editor/
+  styles/
+    globals.css
+    outlineEditor.css
 ```
 
 ## Acceptance checklist
@@ -117,7 +133,7 @@ src/
 - [x] Keyboard shortcuts for auxiliary actions and fast creation
 - [x] Auto-save and restore with IndexedDB fallback
 - [x] Visible-note culling for large boards
-- [x] Fullscreen note editor with WYSIWYG-style rich text surface backed by Markdown
+- [x] Fullscreen note editor using local `outline-editor` module with Markdown-backed storage
 - [x] Core interaction tests with Vitest + Testing Library
 
 ## Next iterations

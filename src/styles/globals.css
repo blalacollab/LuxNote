@@ -8,20 +8,49 @@
   --color-text-soft: rgba(217, 233, 238, 0.76);
   --color-accent: #91f1ff;
   --color-warm: #ffb779;
-  --font-display:
-    'Avenir Next Condensed',
-    'DIN Alternate',
-    'Bahnschrift',
+  --font-ui:
+    'SF Pro Text',
+    'Avenir Next',
+    'Segoe UI',
     'PingFang SC',
     'Noto Sans SC',
+    'Microsoft YaHei',
+    'Helvetica Neue',
+    Arial,
     sans-serif;
-  --font-body:
+  --font-display:
+    'Avenir Next Condensed',
     'Avenir Next',
+    'SF Pro Display',
+    'DIN Alternate',
+    'Bahnschrift',
+    'Segoe UI',
+    'PingFang SC',
+    'Noto Sans SC',
+    'Microsoft YaHei',
+    sans-serif;
+  --font-body: var(--font-ui);
+  --font-editor-title:
+    'Roboto Condensed',
+    'Roboto',
+    'Roboto Flex',
     'SF Pro Display',
     'PingFang SC',
     'Noto Sans SC',
     'Microsoft YaHei',
     sans-serif;
+  --font-mono:
+    'JetBrains Mono',
+    'SFMono-Regular',
+    'Cascadia Mono',
+    'Cascadia Code',
+    'Roboto Mono',
+    Menlo,
+    Monaco,
+    Consolas,
+    'Liberation Mono',
+    'Courier New',
+    monospace;
 }
 
 * {
@@ -35,11 +64,21 @@ body,
   height: 100%;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-kerning: normal;
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
   overflow: hidden;
 }
 

@@ -19,6 +19,11 @@ interface CanvasStageProps {
   linkingFromId: string | null;
 }
 
+interface GridCache {
+  key: string;
+  canvas: HTMLCanvasElement;
+}
+
 function drawGrid(
   ctx: CanvasRenderingContext2D,
   camera: CameraState,
@@ -151,6 +156,21 @@ function drawConnections(
   }
 }
 
+function buildGridCacheKey(
+  camera: CameraState,
+  viewport: ViewportSize,
+  dpr: number,
+): string {
+  return [
+    viewport.width,
+    viewport.height,
+    dpr.toFixed(3),
+    camera.x.toFixed(3),
+    camera.y.toFixed(3),
+    camera.zoom.toFixed(5),
+  ].join('|');
+}
+
 export function CanvasStage({
   camera,
   viewport,
@@ -160,6 +180,7 @@ export function CanvasStage({
   linkingFromId,
 }: CanvasStageProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const gridCacheRef = useRef<GridCache | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -182,11 +203,37 @@ export function CanvasStage({
       return;
     }
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, width, height);
+    const cacheKey = buildGridCacheKey(camera, { width, height }, dpr);
+    let cache = gridCacheRef.current;
 
-    drawGrid(ctx, camera, { width, height });
+    if (!cache) {
+      cache = {
+        key: '',
+        canvas: document.createElement('canvas'),
+      };
+      gridCacheRef.current = cache;
+    }
+
+    if (cache.key !== cacheKey) {
+      cache.canvas.width = canvas.width;
+      cache.canvas.height = canvas.height;
+
+      const gridCtx = cache.canvas.getContext('2d');
+
+      if (!gridCtx) {
+        return;
+      }
+
+      gridCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      gridCtx.clearRect(0, 0, width, height);
+      drawGrid(gridCtx, camera, { width, height });
+      cache.key = cacheKey;
+    }
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(cache.canvas, 0, 0);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     drawConnections(
       ctx,
       camera,

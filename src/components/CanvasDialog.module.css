@@ -19,34 +19,38 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 24px;
-  border-bottom: 1px solid rgba(170, 221, 233, 0.1);
+  gap: 12px;
+  padding: 10px 18px 0;
+  background: linear-gradient(180deg, rgba(3, 6, 8, 0.7), rgba(3, 6, 8, 0));
 }
 
 .topbarGroup {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .navButton {
-  border: 1px solid rgba(160, 216, 228, 0.14);
+  border: 1px solid rgba(160, 216, 228, 0.08);
   border-radius: 4px;
-  padding: 10px 14px;
-  background: rgba(10, 14, 18, 0.82);
-  color: #effaff;
+  padding: 6px 10px;
+  background: rgba(8, 12, 16, 0.42);
+  color: rgba(236, 247, 251, 0.92);
+  font-size: 12px;
+  letter-spacing: 0.03em;
   cursor: pointer;
   transition:
     transform 150ms ease,
     border-color 150ms ease,
-    background-color 150ms ease;
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .navButton:hover {
   transform: translateY(-1px);
-  border-color: rgba(160, 216, 228, 0.3);
-  background: rgba(17, 23, 30, 0.92);
+  border-color: rgba(160, 216, 228, 0.22);
+  background: rgba(14, 20, 25, 0.78);
+  color: #effaff;
 }
 
 .navButton[data-danger='true'] {
@@ -58,33 +62,39 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 34px 24px 56px;
+  padding: 10px 22px 52px;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .editorFrame {
-  width: min(1240px, calc(100% - 8px));
+  --document-pad-x: 42px;
+  --document-column-width: 940px;
+  width: min(1080px, calc(100% - 24px));
   margin: 0 auto;
-  padding: 34px 36px 42px;
-  border: 1px solid rgba(170, 221, 233, 0.12);
+  padding: 18px 0 36px;
+  border: 0;
   border-radius: 0;
   background:
-    linear-gradient(180deg, rgba(9, 13, 17, 0.96), rgba(6, 8, 11, 0.94)),
-    radial-gradient(circle at top left, rgba(145, 241, 255, 0.05), transparent 32%);
+    linear-gradient(180deg, rgba(4, 8, 11, 0.82), rgba(4, 8, 11, 0.62)),
+    radial-gradient(circle at top left, rgba(126, 225, 242, 0.05), transparent 26%);
   box-shadow:
-    0 32px 96px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    0 28px 70px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .documentHeader {
-  margin-bottom: 22px;
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 2px var(--document-pad-x) 6px;
 }
 
 .titleInput {
+  display: block;
   width: 100%;
   min-height: 0;
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   padding: 0;
   border: 0;
   outline: none;
@@ -92,10 +102,11 @@
   overflow: hidden;
   background: transparent;
   color: #effaff;
-  font-family: var(--font-display);
-  font-size: clamp(36px, 5vw, 54px);
-  line-height: 1.02;
+  font-family: var(--font-editor-title);
+  font-size: clamp(30px, 4.2vw, 48px);
+  line-height: 0.98;
   letter-spacing: 0.03em;
+  text-align: left;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -104,230 +115,45 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 8px 10px;
 }
 
 .tagLabel {
   color: rgba(189, 224, 231, 0.5);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .metaChip {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
-  border: 1px solid rgba(160, 216, 228, 0.12);
-  background: rgba(11, 16, 20, 0.72);
-  color: rgba(210, 232, 238, 0.78);
+  min-height: 24px;
+  padding: 0 9px;
+  border: 1px solid rgba(160, 216, 228, 0.06);
+  background: rgba(10, 16, 20, 0.58);
+  color: rgba(216, 236, 242, 0.76);
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .tagPlaceholder {
   color: rgba(189, 224, 231, 0.48);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
 }
 
 .editorPanel {
   min-height: 0;
-  border: 1px solid rgba(160, 216, 228, 0.1);
-  background: rgba(7, 10, 13, 0.68);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(160, 216, 228, 0.08);
-}
-
-.panelTitle {
-  color: #effaff;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.panelHint {
-  color: rgba(189, 224, 231, 0.54);
-  font-size: 11px;
-  letter-spacing: 0.05em;
-}
-
-.richEditor {
-  width: 100%;
+.editorViewport {
   min-height: min(72vh, 920px);
-  padding: 18px 22px 24px;
-  border: 0;
-  outline: none;
   background: transparent;
-  color: rgba(231, 243, 247, 0.92);
-  font-size: 17px;
-  line-height: 1.85;
-  caret-color: #aef4ff;
-  white-space: pre-wrap;
-  word-break: break-word;
-  overflow-wrap: anywhere;
-}
-
-.richEditor[data-empty='true']::before {
-  content: attr(data-placeholder);
-  color: rgba(168, 202, 210, 0.34);
-  pointer-events: none;
-}
-
-.richEditor h1,
-.richEditor h2,
-.richEditor h3,
-.richEditor h4 {
-  color: #f2fbff;
-  font-family: var(--font-display);
-  letter-spacing: 0.04em;
-  line-height: 1.08;
-}
-
-.richEditor h1 {
-  font-size: 2.1em;
-}
-
-.richEditor h2 {
-  font-size: 1.65em;
-}
-
-.richEditor h3 {
-  font-size: 1.32em;
-}
-
-.richEditor p,
-.richEditor ul,
-.richEditor ol,
-.richEditor blockquote,
-.richEditor pre {
-  margin: 0 0 1em;
-}
-
-.richEditor ul,
-.richEditor ol {
-  padding-left: 1.4em;
-}
-
-.richEditor ul[data-task-list='true'] {
-  list-style: none;
-  padding-left: 0;
-}
-
-.richEditor li[data-checked] {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.richEditor span[data-task-box='true'] {
-  width: 14px;
-  height: 14px;
-  margin-top: 0.42em;
-  border: 1px solid rgba(160, 216, 228, 0.28);
-  background: rgba(9, 13, 16, 0.72);
-  flex: 0 0 auto;
-}
-
-.richEditor li[data-checked='true'] span[data-task-box='true'] {
-  background:
-    linear-gradient(180deg, rgba(145, 241, 255, 0.88), rgba(111, 212, 231, 0.82));
-  box-shadow: 0 0 12px rgba(145, 241, 255, 0.18);
-}
-
-.richEditor blockquote {
-  margin-left: 0;
-  padding-left: 1em;
-  border-left: 2px solid rgba(145, 241, 255, 0.3);
-  color: rgba(214, 233, 239, 0.78);
-}
-
-.richEditor code {
-  padding: 0.12em 0.42em;
-  border-radius: 2px;
-  background: rgba(145, 241, 255, 0.08);
-  font-family:
-    'SF Mono',
-    'Monaco',
-    'Cascadia Code',
-    'Roboto Mono',
-    monospace;
-}
-
-.richEditor pre {
-  padding: 16px;
-  border: 1px solid rgba(160, 216, 228, 0.08);
-  background: rgba(5, 8, 10, 0.88);
-  overflow: auto;
-}
-
-.richEditor img {
-  max-width: 100%;
-  height: auto;
-  display: block;
-  margin: 1.2em 0;
-  border: 1px solid rgba(160, 216, 228, 0.08);
-}
-
-.richEditor table {
-  width: 100%;
-  border-collapse: collapse;
-  margin: 0 0 1.4em;
-}
-
-.richEditor th,
-.richEditor td {
-  padding: 10px 12px;
-  border: 1px solid rgba(160, 216, 228, 0.08);
-  text-align: left;
-}
-
-.richEditor th {
-  color: #eefaff;
-  background: rgba(12, 17, 22, 0.76);
-}
-
-.richEditor hr {
-  border: 0;
-  border-top: 1px solid rgba(160, 216, 228, 0.16);
-  margin: 1.4em 0;
-}
-
-.richEditor pre code {
-  padding: 0;
-  background: transparent;
-}
-
-.richEditor a {
-  color: #aef4ff;
-}
-
-.richEditor del {
-  color: rgba(196, 208, 214, 0.66);
-}
-
-.richEditor mark {
-  padding: 0.1em 0.24em;
-  background: rgba(255, 196, 120, 0.22);
-  color: #fff2df;
-}
-
-.richEditor a[data-wiki-link='true'] {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.12em 0.46em;
-  border: 1px solid rgba(160, 216, 228, 0.14);
-  background: rgba(15, 23, 28, 0.78);
-  color: #d9fbff;
 }
 
 .settingsLayout {
@@ -436,20 +262,21 @@
 
 @media (max-width: 980px) {
   .topbar {
-    padding: 14px;
+    padding: 10px 12px 0;
   }
 
   .editorShell {
-    padding: 16px 12px 28px;
+    padding: 8px 12px 32px;
   }
 
   .editorFrame {
+    --document-pad-x: 18px;
+    --document-column-width: 100%;
     width: 100%;
-    padding: 24px 20px 34px;
-  }
-
-  .richEditor {
-    min-height: 40vh;
+    padding: 14px 0 24px;
+    box-shadow:
+      0 18px 48px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .settingsLayout {
