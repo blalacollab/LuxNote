@@ -72,7 +72,7 @@ npm run test
 ### Performance choices
 
 - Only notes inside the camera bounds plus overscan are mounted.
-- Each frame update is driven by `requestAnimationFrame`, but state writes happen only when note inertia or zoom animation is active.
+- The animation loop starts only when note inertia or zoom animation is active, and stops immediately when the scene is idle.
 - Canvas 2D draws the dense grid and all visible connection curves without forcing every note into the DOM tree.
 - Card motion uses lightweight per-note velocity values instead of rerendering hidden notes.
 - Background panning uses a drag threshold and `requestAnimationFrame` batching inspired by canvas-oriented interaction systems.
@@ -89,7 +89,6 @@ src/
   components/
     CanvasStage.tsx
     CanvasDialog.tsx
-    InspectorPanel.tsx
     NoteCard.tsx
     OutlineNoteEditor.tsx
   hooks/
@@ -101,7 +100,6 @@ src/
     camera.ts
     constants.ts
     ids.ts
-    markdown.ts
     markdownDialect.ts
     outlineI18n.ts
     outlineTheme.ts

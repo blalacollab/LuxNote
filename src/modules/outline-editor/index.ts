@@ -60,6 +60,7 @@ function ensureNodeCompatGlobals() {
 
 export async function loadOutlineEditorRuntime() {
   ensureNodeCompatGlobals();
+  await import('../../lib/outlineI18n');
   await import('./styles');
   return import('./runtime');
 }

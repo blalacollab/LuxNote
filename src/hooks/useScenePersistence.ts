@@ -42,7 +42,33 @@ export function useScenePersistence(): void {
     }
 
     let timer = 0;
-    const setSaveStatus = useCanvasStore.getState().setSaveStatus;
+    const markSaving = () => useCanvasStore.getState().setSaveStatus('saving');
+
+    const scheduleSave = () => {
+      const state = useCanvasStore.getState();
+
+      if (!state.isHydrated) {
+        return;
+      }
+
+      markSaving();
+      window.clearTimeout(timer);
+      timer = window.setTimeout(async () => {
+        const latestState = useCanvasStore.getState();
+
+        if (!latestState.isHydrated) {
+          return;
+        }
+
+        try {
+          await saveScene(buildSnapshot(latestState));
+          useCanvasStore.getState().setSaveStatus('saved');
+        } catch {
+          useCanvasStore.getState().setSaveStatus('error');
+        }
+      }, SAVE_DEBOUNCE_MS);
+    };
+
     const flushSnapshot = () => {
       const state = useCanvasStore.getState();
 
@@ -52,9 +78,9 @@ export function useScenePersistence(): void {
 
       try {
         writeSceneToLocalStorage(buildSnapshot(state));
-        setSaveStatus('saved');
+        useCanvasStore.getState().setSaveStatus('saved');
       } catch {
-        setSaveStatus('error');
+        useCanvasStore.getState().setSaveStatus('error');
       }
     };
     const handleVisibilityChange = () => {
@@ -63,25 +89,32 @@ export function useScenePersistence(): void {
       }
     };
 
-    const unsubscribe = useCanvasStore.subscribe(
-      (state) =>
-        state.isHydrated ? JSON.stringify(buildSnapshot(state)) : null,
-      (serialized) => {
-        if (!serialized) {
+    const unsubscribeHydration = useCanvasStore.subscribe(
+      (state) => state.isHydrated,
+      (isHydrated) => {
+        if (!isHydrated) {
+          window.clearTimeout(timer);
           return;
         }
 
-        setSaveStatus('saving');
-        window.clearTimeout(timer);
-        timer = window.setTimeout(async () => {
-          try {
-            await saveScene(JSON.parse(serialized));
-            useCanvasStore.getState().setSaveStatus('saved');
-          } catch {
-            useCanvasStore.getState().setSaveStatus('error');
-          }
-        }, SAVE_DEBOUNCE_MS);
+        scheduleSave();
       },
+    );
+    const unsubscribeCamera = useCanvasStore.subscribe(
+      (state) => state.camera,
+      scheduleSave,
+    );
+    const unsubscribeNotes = useCanvasStore.subscribe(
+      (state) => state.notes,
+      scheduleSave,
+    );
+    const unsubscribeConnections = useCanvasStore.subscribe(
+      (state) => state.connections,
+      scheduleSave,
+    );
+    const unsubscribePreferences = useCanvasStore.subscribe(
+      (state) => state.preferences,
+      scheduleSave,
     );
 
     window.addEventListener('pagehide', flushSnapshot);
@@ -89,7 +122,11 @@ export function useScenePersistence(): void {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      unsubscribe();
+      unsubscribeHydration();
+      unsubscribeCamera();
+      unsubscribeNotes();
+      unsubscribeConnections();
+      unsubscribePreferences();
       window.clearTimeout(timer);
       window.removeEventListener('pagehide', flushSnapshot);
       window.removeEventListener('beforeunload', flushSnapshot);

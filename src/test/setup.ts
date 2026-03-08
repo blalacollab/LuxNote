@@ -89,6 +89,7 @@ Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
       arc() {},
       bezierCurveTo() {},
       clearRect() {},
+      drawImage() {},
       scale() {},
       setTransform() {},
       lineWidth: 1,

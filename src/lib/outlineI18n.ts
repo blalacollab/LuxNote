@@ -4,6 +4,7 @@ import { initReactI18next } from 'react-i18next';
 void i18n.use(initReactI18next).init({
   lng: 'en',
   fallbackLng: 'en',
+  showSupportNotice: false,
   resources: {
     en: {
       translation: {},
