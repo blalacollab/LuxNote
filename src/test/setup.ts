@@ -1,4 +1,7 @@
 import '@testing-library/jest-dom/vitest';
+import { vi } from 'vitest';
+
+vi.mock('outline-editor', async () => import('./outlineEditorMock'));
 
 class ResizeObserverMock {
   observe() {}

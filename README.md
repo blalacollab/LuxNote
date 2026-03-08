@@ -7,6 +7,7 @@ LuxNote is a local-first infinite canvas notes app built with React, TypeScript,
 - React + TypeScript + Vite
 - Zustand for scene and interaction state
 - Canvas 2D for grid and connection rendering
+- Vendored `outline-editor` for the fullscreen document editor
 - CSS variables + CSS Modules
 - IndexedDB with localStorage fallback
 - Vitest + Testing Library
@@ -49,20 +50,23 @@ npm run test
 ### Rendering split
 
 - `CanvasStage` draws the background grid and connection lines on a single canvas layer.
-- `React DOM` renders only the visible note cards, the hidden settings note, and the fullscreen note editor.
-- This hybrid avoids expensive DOM work for vector layers while keeping note editing accessible and straightforward.
+- `React DOM` renders only the visible note cards, the hidden settings note, and the fullscreen note shell.
+- The note shell hosts a vendored `outline-editor` instance for Markdown-first WYSIWYG editing while LuxNote keeps title, tags, and persistence outside the editor runtime.
+- This hybrid avoids expensive DOM work for vector layers while keeping document editing rich and predictable.
 
 ### Scene model
 
 - `src/store/canvasStore.ts` owns camera state, notes, links, z-order, drag inertia, zoom animation, and hydration state.
 - Notes store world coordinates, fixed dimensions, timestamps, and stacking order.
 - Links store note-to-note relationships using stable deterministic ids.
+- `NoteRecord.title` and `NoteRecord.body` stay unchanged; the editor only replaces the body editing surface.
 
 ### Persistence
 
 - `src/hooks/useScenePersistence.ts` hydrates the scene on boot.
 - Every persisted scene change is debounced and written to IndexedDB.
 - When IndexedDB is unavailable or fails, localStorage is used as a fallback.
+- The fullscreen editor flushes Markdown back into Zustand before close, blur, and unmount so editor state and persisted state stay aligned.
 
 ### Performance choices
 
@@ -82,8 +86,10 @@ src/
     App.module.css
   components/
     CanvasStage.tsx
+    CanvasDialog.tsx
     InspectorPanel.tsx
     NoteCard.tsx
+    OutlineNoteEditor.tsx
   hooks/
     useAnimationLoop.ts
     useCanvasHotkeys.ts
@@ -94,6 +100,9 @@ src/
     constants.ts
     ids.ts
     markdown.ts
+    markdownDialect.ts
+    outlineI18n.ts
+    outlineTheme.ts
     persistence.ts
     physics.ts
     seed.ts
@@ -104,7 +113,14 @@ src/
   test/
     camera.test.ts
     hotkeys.test.tsx
+    outlineNoteEditor.test.tsx
+    noteInteractions.test.tsx
     viewport.test.ts
+  styles/
+    globals.css
+    outlineEditor.css
+vendor/
+  outline-editor/
 ```
 
 ## Acceptance checklist
@@ -117,7 +133,7 @@ src/
 - [x] Keyboard shortcuts for auxiliary actions and fast creation
 - [x] Auto-save and restore with IndexedDB fallback
 - [x] Visible-note culling for large boards
-- [x] Fullscreen note editor with WYSIWYG-style rich text surface backed by Markdown
+- [x] Fullscreen note editor using vendored `outline-editor` with Markdown-backed storage
 - [x] Core interaction tests with Vitest + Testing Library
 
 ## Next iterations

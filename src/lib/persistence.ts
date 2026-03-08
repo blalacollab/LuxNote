@@ -53,34 +53,7 @@ async function loadFromIndexedDb(): Promise<PersistedScene | null> {
   return result;
 }
 
-export async function saveScene(scene: PersistedScene): Promise<void> {
-  if (canUseIndexedDb()) {
-    try {
-      await saveToIndexedDb(scene);
-      return;
-    } catch {
-      // Fall through to localStorage.
-    }
-  }
-
-  if (typeof localStorage !== 'undefined') {
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(scene));
-  }
-}
-
-export async function loadScene(): Promise<PersistedScene | null> {
-  if (canUseIndexedDb()) {
-    try {
-      const scene = await loadFromIndexedDb();
-
-      if (scene) {
-        return scene;
-      }
-    } catch {
-      // Fall through to localStorage.
-    }
-  }
-
+function readSceneFromLocalStorage(): PersistedScene | null {
   if (typeof localStorage === 'undefined') {
     return null;
   }
@@ -96,4 +69,67 @@ export async function loadScene(): Promise<PersistedScene | null> {
   } catch {
     return null;
   }
+}
+
+function getSceneFreshness(scene: PersistedScene | null): number {
+  if (!scene) {
+    return -1;
+  }
+
+  let freshness = 0;
+
+  for (const note of Object.values(scene.notes)) {
+    freshness = Math.max(freshness, note.updatedAt, note.createdAt);
+  }
+
+  for (const connection of Object.values(scene.connections)) {
+    freshness = Math.max(freshness, connection.createdAt);
+  }
+
+  return freshness;
+}
+
+export function writeSceneToLocalStorage(scene: PersistedScene): void {
+  if (typeof localStorage === 'undefined') {
+    return;
+  }
+
+  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(scene));
+}
+
+export async function saveScene(scene: PersistedScene): Promise<void> {
+  writeSceneToLocalStorage(scene);
+
+  if (canUseIndexedDb()) {
+    try {
+      await saveToIndexedDb(scene);
+      return;
+    } catch {
+      // Fall through to localStorage.
+    }
+  }
+}
+
+export async function loadScene(): Promise<PersistedScene | null> {
+  const localScene = readSceneFromLocalStorage();
+
+  if (canUseIndexedDb()) {
+    try {
+      const indexedScene = await loadFromIndexedDb();
+
+      if (indexedScene && localScene) {
+        return getSceneFreshness(localScene) >= getSceneFreshness(indexedScene)
+          ? localScene
+          : indexedScene;
+      }
+
+      if (indexedScene) {
+        return indexedScene;
+      }
+    } catch {
+      // Fall through to localStorage.
+    }
+  }
+
+  return localScene;
 }

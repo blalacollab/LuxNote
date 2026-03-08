@@ -1,7 +1,11 @@
 import { useEffect } from 'react';
 
 import { SAVE_DEBOUNCE_MS } from '../lib/constants';
-import { loadScene, saveScene } from '../lib/persistence';
+import {
+  loadScene,
+  saveScene,
+  writeSceneToLocalStorage,
+} from '../lib/persistence';
 import { buildSnapshot, useCanvasStore } from '../store/canvasStore';
 
 export function useScenePersistence(): void {
@@ -30,6 +34,25 @@ export function useScenePersistence(): void {
   useEffect(() => {
     let timer = 0;
     const setSaveStatus = useCanvasStore.getState().setSaveStatus;
+    const flushSnapshot = () => {
+      const state = useCanvasStore.getState();
+
+      if (!state.isHydrated) {
+        return;
+      }
+
+      try {
+        writeSceneToLocalStorage(buildSnapshot(state));
+        setSaveStatus('saved');
+      } catch {
+        setSaveStatus('error');
+      }
+    };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushSnapshot();
+      }
+    };
 
     const unsubscribe = useCanvasStore.subscribe(
       (state) =>
@@ -52,9 +75,16 @@ export function useScenePersistence(): void {
       },
     );
 
+    window.addEventListener('pagehide', flushSnapshot);
+    window.addEventListener('beforeunload', flushSnapshot);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
     return () => {
       unsubscribe();
       window.clearTimeout(timer);
+      window.removeEventListener('pagehide', flushSnapshot);
+      window.removeEventListener('beforeunload', flushSnapshot);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
 }

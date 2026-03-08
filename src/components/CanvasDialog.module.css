@@ -19,34 +19,38 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 18px 24px;
-  border-bottom: 1px solid rgba(170, 221, 233, 0.1);
+  gap: 12px;
+  padding: 10px 18px 0;
+  background: linear-gradient(180deg, rgba(3, 6, 8, 0.7), rgba(3, 6, 8, 0));
 }
 
 .topbarGroup {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
 }
 
 .navButton {
-  border: 1px solid rgba(160, 216, 228, 0.14);
+  border: 1px solid rgba(160, 216, 228, 0.08);
   border-radius: 4px;
-  padding: 10px 14px;
-  background: rgba(10, 14, 18, 0.82);
-  color: #effaff;
+  padding: 6px 10px;
+  background: rgba(8, 12, 16, 0.42);
+  color: rgba(236, 247, 251, 0.92);
+  font-size: 12px;
+  letter-spacing: 0.03em;
   cursor: pointer;
   transition:
     transform 150ms ease,
     border-color 150ms ease,
-    background-color 150ms ease;
+    background-color 150ms ease,
+    color 150ms ease;
 }
 
 .navButton:hover {
   transform: translateY(-1px);
-  border-color: rgba(160, 216, 228, 0.3);
-  background: rgba(17, 23, 30, 0.92);
+  border-color: rgba(160, 216, 228, 0.22);
+  background: rgba(14, 20, 25, 0.78);
+  color: #effaff;
 }
 
 .navButton[data-danger='true'] {
@@ -58,33 +62,39 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 34px 24px 56px;
+  padding: 10px 22px 52px;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .editorFrame {
-  width: min(1240px, calc(100% - 8px));
+  --document-pad-x: 42px;
+  --document-column-width: 940px;
+  width: min(1080px, calc(100% - 24px));
   margin: 0 auto;
-  padding: 34px 36px 42px;
-  border: 1px solid rgba(170, 221, 233, 0.12);
+  padding: 18px 0 36px;
+  border: 0;
   border-radius: 0;
   background:
-    linear-gradient(180deg, rgba(9, 13, 17, 0.96), rgba(6, 8, 11, 0.94)),
-    radial-gradient(circle at top left, rgba(145, 241, 255, 0.05), transparent 32%);
+    linear-gradient(180deg, rgba(4, 8, 11, 0.82), rgba(4, 8, 11, 0.62)),
+    radial-gradient(circle at top left, rgba(126, 225, 242, 0.05), transparent 26%);
   box-shadow:
-    0 32px 96px rgba(0, 0, 0, 0.42),
-    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+    0 28px 70px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
 }
 
 .documentHeader {
-  margin-bottom: 22px;
+  box-sizing: border-box;
+  width: min(100%, var(--document-column-width));
+  margin: 0 auto 12px;
+  padding: 2px var(--document-pad-x) 6px;
 }
 
 .titleInput {
+  display: block;
   width: 100%;
   min-height: 0;
-  margin: 0 0 20px;
+  margin: 0 0 14px;
   padding: 0;
   border: 0;
   outline: none;
@@ -93,9 +103,10 @@
   background: transparent;
   color: #effaff;
   font-family: var(--font-display);
-  font-size: clamp(36px, 5vw, 54px);
-  line-height: 1.02;
+  font-size: clamp(30px, 4.2vw, 48px);
+  line-height: 0.98;
   letter-spacing: 0.03em;
+  text-align: left;
   white-space: pre-wrap;
   word-break: break-word;
 }
@@ -104,61 +115,45 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 8px 10px;
 }
 
 .tagLabel {
   color: rgba(189, 224, 231, 0.5);
   font-size: 11px;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .metaChip {
   display: inline-flex;
   align-items: center;
-  min-height: 26px;
-  padding: 0 10px;
-  border: 1px solid rgba(160, 216, 228, 0.12);
-  background: rgba(11, 16, 20, 0.72);
-  color: rgba(210, 232, 238, 0.78);
+  min-height: 24px;
+  padding: 0 9px;
+  border: 1px solid rgba(160, 216, 228, 0.06);
+  background: rgba(10, 16, 20, 0.58);
+  color: rgba(216, 236, 242, 0.76);
   font-size: 11px;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .tagPlaceholder {
   color: rgba(189, 224, 231, 0.48);
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.6;
 }
 
 .editorPanel {
   min-height: 0;
-  border: 1px solid rgba(160, 216, 228, 0.1);
-  background: rgba(7, 10, 13, 0.68);
+  border: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
-.panelHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(160, 216, 228, 0.08);
-}
-
-.panelTitle {
-  color: #effaff;
-  font-size: 12px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.panelHint {
-  color: rgba(189, 224, 231, 0.54);
-  font-size: 11px;
-  letter-spacing: 0.05em;
+.editorViewport {
+  min-height: min(72vh, 920px);
+  background: transparent;
 }
 
 .richEditor {
@@ -436,16 +431,21 @@
 
 @media (max-width: 980px) {
   .topbar {
-    padding: 14px;
+    padding: 10px 12px 0;
   }
 
   .editorShell {
-    padding: 16px 12px 28px;
+    padding: 8px 12px 32px;
   }
 
   .editorFrame {
+    --document-pad-x: 18px;
+    --document-column-width: 100%;
     width: 100%;
-    padding: 24px 20px 34px;
+    padding: 14px 0 24px;
+    box-shadow:
+      0 18px 48px rgba(0, 0, 0, 0.28),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .richEditor {
