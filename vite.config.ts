@@ -1,7 +1,10 @@
-import { resolve } from 'node:path';
-
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { fileURLToPath, URL } from 'node:url';
+
+const outlineEditorRuntimePath = fileURLToPath(
+  new URL('./src/modules/outline-editor/dist/index.cjs', import.meta.url),
+);
 
 export default defineConfig({
   plugins: [react()],
@@ -16,20 +19,35 @@ export default defineConfig({
     ],
     alias: [
       {
-        find: /^outline-editor\/styles\.css$/,
-        replacement: resolve(__dirname, 'vendor/outline-editor/dist/outline-editor.css'),
-      },
-      {
-        find: /^outline-editor$/,
-        replacement: resolve(__dirname, 'vendor/outline-editor/dist/index.cjs'),
+        find: 'outline-editor-local-runtime',
+        replacement: outlineEditorRuntimePath,
       },
     ],
   },
   optimizeDeps: {
-    include: ['outline-editor', 'styled-components'],
+    include: ['styled-components', 'outline-editor-local-runtime'],
     esbuildOptions: {
       define: {
         global: 'globalThis',
+      },
+    },
+  },
+  build: {
+    // The editor runtime is intentionally lazy-loaded as a large optional chunk.
+    chunkSizeWarningLimit: 8000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('/src/modules/outline-editor/')) {
+            return 'editor-core';
+          }
+
+          if (id.includes('/node_modules/')) {
+            return 'app-core';
+          }
+
+          return undefined;
+        },
       },
     },
   },
@@ -38,5 +56,6 @@ export default defineConfig({
     globals: true,
     setupFiles: './src/test/setup.ts',
     css: true,
+    include: ['src/test/**/*.{test,spec}.{ts,tsx}'],
   },
 });

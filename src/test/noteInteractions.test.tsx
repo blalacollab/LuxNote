@@ -15,6 +15,13 @@ function StoreBackedDialog({ noteId }: { noteId: string }) {
   return <CanvasDialog dialog={{ type: 'note', noteId }} note={note} />;
 }
 
+async function renderAppWithSettledEffects() {
+  render(<App />);
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
 describe('note interactions', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -98,6 +105,7 @@ describe('note interactions', () => {
 
     const editor = await screen.findByRole('textbox', { name: /note editor/i });
     fireEvent.focus(editor);
+    fireEvent.keyDown(editor, { key: 'a', code: 'KeyA' });
     editor.textContent = 'Plan #research';
     fireEvent.input(editor);
 
@@ -125,6 +133,7 @@ describe('note interactions', () => {
 
     const editor = await screen.findByRole('textbox', { name: /note editor/i });
     fireEvent.focus(editor);
+    fireEvent.keyDown(editor, { key: 'a', code: 'KeyA' });
     editor.textContent = 'Persist me';
     fireEvent.input(editor);
     fireEvent(window, new Event('pagehide'));
@@ -140,7 +149,7 @@ describe('note interactions', () => {
     const note = Object.values(useCanvasStore.getState().notes)[0];
     const beforeCount = Object.keys(useCanvasStore.getState().notes).length;
 
-    render(<App />);
+    await renderAppWithSettledEffects();
 
     act(() => {
       useCanvasStore.getState().requestDeleteNote(note.id);
@@ -164,7 +173,7 @@ describe('note interactions', () => {
     const note = Object.values(useCanvasStore.getState().notes)[0];
     const beforeCount = Object.keys(useCanvasStore.getState().notes).length;
 
-    render(<App />);
+    await renderAppWithSettledEffects();
 
     act(() => {
       useCanvasStore.getState().requestDeleteNote(note.id);
@@ -193,7 +202,7 @@ describe('note interactions', () => {
       selectedNoteId: note.id,
     });
 
-    render(<App />);
+    await renderAppWithSettledEffects();
 
     const editor = await screen.findByRole('textbox', { name: /note editor/i });
     const before = useCanvasStore.getState().camera;
@@ -239,6 +248,28 @@ describe('note interactions', () => {
     expect(useCanvasStore.getState().activeDialog).toBeNull();
   });
 
+  it('drops a pristine draft when changes are only blank-normalization', () => {
+    const store = useCanvasStore.getState();
+    const id = store.createNote();
+
+    store.openNoteDialog(id);
+    store.updateNote(id, { body: '\n' });
+    store.closeDialog();
+
+    expect(useCanvasStore.getState().notes[id]).toBeUndefined();
+  });
+
+  it('drops a pristine draft when body only contains invisible characters', () => {
+    const store = useCanvasStore.getState();
+    const id = store.createNote();
+
+    store.openNoteDialog(id);
+    store.updateNote(id, { body: '\u200B' });
+    store.closeDialog();
+
+    expect(useCanvasStore.getState().notes[id]).toBeUndefined();
+  });
+
   it('opens external links from the editor wrapper without throwing', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     const user = userEvent.setup();
@@ -246,7 +277,7 @@ describe('note interactions', () => {
 
     render(<StoreBackedDialog noteId={note.id} />);
 
-    await user.click(screen.getByRole('button', { name: /open link/i }));
+    await user.click(await screen.findByRole('button', { name: /open link/i }));
 
     expect(openSpy).toHaveBeenCalledWith(
       'https://example.com',

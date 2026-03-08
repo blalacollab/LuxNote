@@ -57,8 +57,7 @@ export const outlineTheme = {
   isDark: true,
   fontFamily:
     "var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-  fontFamilyMono:
-    "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace",
+  fontFamilyMono: 'var(--font-mono)',
   fontFamilyEmoji:
     'Apple Color Emoji, Segoe UI Emoji, Segoe UI Symbol, Segoe UI, Twemoji Mozilla, Noto Color Emoji, Android Emoji',
   fontWeightRegular: 400,

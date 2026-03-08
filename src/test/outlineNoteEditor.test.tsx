@@ -14,7 +14,7 @@ describe('OutlineNoteEditor', () => {
     resetOutlineEditorMock();
   });
 
-  it('wires the vendored editor preset and host adapter', async () => {
+  it('wires the local editor module preset and host adapter', async () => {
     const handleChange = vi.fn();
 
     render(
@@ -116,5 +116,30 @@ describe('OutlineNoteEditor', () => {
       | undefined;
 
     expect(getter?.()).toBe('Persist me');
+  });
+
+  it('keeps getter value at initial content until the user interacts', async () => {
+    const handleRegisterValueGetter = vi.fn();
+
+    render(
+      <OutlineNoteEditor
+        editorKey="note-5"
+        value=""
+        defaultValue=""
+        onChange={vi.fn()}
+        onRegisterValueGetter={handleRegisterValueGetter}
+      />,
+    );
+
+    await screen.findByRole('textbox', { name: /note editor/i });
+
+    const props = getLastOutlineEditorProps() as Record<string, any>;
+    props.onChange(() => '\u200B');
+
+    const getter = handleRegisterValueGetter.mock.calls.at(-1)?.[0] as
+      | (() => string)
+      | undefined;
+
+    expect(getter?.()).toBe('');
   });
 });

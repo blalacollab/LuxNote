@@ -7,10 +7,11 @@ LuxNote is a local-first infinite canvas notes app built with React, TypeScript,
 - React + TypeScript + Vite
 - Zustand for scene and interaction state
 - Canvas 2D for grid and connection rendering
-- Vendored `outline-editor` for the fullscreen document editor
+- In-repo `src/modules/outline-editor` module for the fullscreen document editor
 - CSS variables + CSS Modules
 - IndexedDB with localStorage fallback
 - Vitest + Testing Library
+- Third-party license notices tracked in `THIRD_PARTY_NOTICES.md`
 
 ## Run
 
@@ -51,7 +52,7 @@ npm run test
 
 - `CanvasStage` draws the background grid and connection lines on a single canvas layer.
 - `React DOM` renders only the visible note cards, the hidden settings note, and the fullscreen note shell.
-- The note shell hosts a vendored `outline-editor` instance for Markdown-first WYSIWYG editing while LuxNote keeps title, tags, and persistence outside the editor runtime.
+- The note shell hosts the local `outline-editor` module for Markdown-first WYSIWYG editing while LuxNote keeps title, tags, and persistence outside the editor runtime.
 - This hybrid avoids expensive DOM work for vector layers while keeping document editing rich and predictable.
 
 ### Scene model
@@ -76,6 +77,7 @@ npm run test
 - Card motion uses lightweight per-note velocity values instead of rerendering hidden notes.
 - Background panning uses a drag threshold and `requestAnimationFrame` batching inspired by canvas-oriented interaction systems.
 - Save writes are debounced to reduce IndexedDB churn during drag sessions.
+- The fullscreen editor runtime and styles are lazy-loaded, so the initial canvas route is not blocked by editor payload.
 
 ## Project structure
 
@@ -116,11 +118,11 @@ src/
     outlineNoteEditor.test.tsx
     noteInteractions.test.tsx
     viewport.test.ts
+  modules/
+    outline-editor/
   styles/
     globals.css
     outlineEditor.css
-vendor/
-  outline-editor/
 ```
 
 ## Acceptance checklist
@@ -133,7 +135,7 @@ vendor/
 - [x] Keyboard shortcuts for auxiliary actions and fast creation
 - [x] Auto-save and restore with IndexedDB fallback
 - [x] Visible-note culling for large boards
-- [x] Fullscreen note editor using vendored `outline-editor` with Markdown-backed storage
+- [x] Fullscreen note editor using local `outline-editor` module with Markdown-backed storage
 - [x] Core interaction tests with Vitest + Testing Library
 
 ## Next iterations

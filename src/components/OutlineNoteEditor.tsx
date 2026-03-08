@@ -1,15 +1,13 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
-import {
-  Editor,
-  createDocumentUIPreset,
-  defaultDictionary,
-  type EditorDataAdapter,
-} from 'outline-editor';
 import { StyleSheetManager, ThemeProvider } from 'styled-components';
 
 import { decorateEditorContent } from '../lib/markdownDialect';
 import { createOutlineTheme } from '../lib/outlineTheme';
+import {
+  loadOutlineEditorRuntime,
+  type EditorDataAdapter,
+} from '../modules/outline-editor';
 
 export interface OutlineNoteEditorProps {
   editorKey: string;
@@ -36,7 +34,7 @@ function openExternalLink(href: string): void {
 }
 
 const blockedDomProps = new Set(['active', 'arrow', 'commenting']);
-const RuntimeEditor = Editor as any;
+type OutlineRuntimeModule = Awaited<ReturnType<typeof loadOutlineEditorRuntime>>;
 
 function shouldForwardProp(propName: string, target: unknown) {
   if (typeof target !== 'string') {
@@ -66,18 +64,21 @@ export function OutlineNoteEditor({
   const decorateFrameRef = useRef<number | null>(null);
   const changeFrameRef = useRef<number | null>(null);
   const hasUserInteractedRef = useRef(false);
+  const [runtime, setRuntime] = useState<OutlineRuntimeModule | null>(null);
+  const [runtimeLoadFailed, setRuntimeLoadFailed] = useState(false);
   const valueGetterRef = useRef<(() => string) | null>(null);
   const initialValueRef = useRef('');
   const readLiveMarkdownRef = useRef<() => string>(() => '');
   const initialValue = value || defaultValue;
   const theme = useMemo(() => createOutlineTheme(), []);
+  const RuntimeEditor = runtime?.Editor as any;
   const extensions = useMemo(
     () =>
-      createDocumentUIPreset({
+      runtime?.createDocumentUIPreset({
         enableFindAndReplace: true,
         enableDiagrams: true,
-      }) as unknown[],
-    [],
+      }) as unknown[] | undefined,
+    [runtime],
   );
   const hostAdapter = useMemo<EditorDataAdapter>(
     () => ({
@@ -93,6 +94,29 @@ export function OutlineNoteEditor({
     }),
     [],
   );
+
+  useEffect(() => {
+    let mounted = true;
+    setRuntimeLoadFailed(false);
+
+    void loadOutlineEditorRuntime()
+      .then((nextRuntime) => {
+        if (mounted) {
+          setRuntime(nextRuntime);
+          setRuntimeLoadFailed(false);
+        }
+      })
+      .catch((error) => {
+        if (mounted) {
+          setRuntimeLoadFailed(true);
+        }
+        console.error('Failed to load outline editor runtime', error);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     initialValueRef.current = initialValue;
@@ -114,6 +138,10 @@ export function OutlineNoteEditor({
 
   useEffect(() => {
     readLiveMarkdownRef.current = () => {
+      if (!hasUserInteractedRef.current) {
+        return initialValueRef.current;
+      }
+
       const liveValue = editorRef.current?.value?.(true, false);
 
       if (typeof liveValue === 'string') {
@@ -201,61 +229,74 @@ export function OutlineNoteEditor({
     >
       <StyleSheetManager shouldForwardProp={shouldForwardProp}>
         <ThemeProvider theme={theme as any}>
-          <RuntimeEditor
-            ref={editorRef as any}
-            key={editorKey}
-            id={`luxnote-outline-editor-${editorKey}`}
-            defaultValue={initialValue}
-            placeholder={placeholder}
-            dictionary={defaultDictionary}
-            embeds={[]}
-            extensions={extensions as any}
-            hostAdapter={hostAdapter}
-            editorStyle={{
-              padding: '8px var(--editor-pad-x, 42px) 72px',
-            }}
-            onChange={(getValue: () => unknown) => {
-              const readMarkdown = () => {
-                const nextValue = getValue();
-                return typeof nextValue === 'string'
-                  ? nextValue
-                  : String(nextValue ?? '');
-              };
+          {runtime && extensions ? (
+            <RuntimeEditor
+              ref={editorRef as any}
+              key={editorKey}
+              id={`luxnote-outline-editor-${editorKey}`}
+              defaultValue={initialValue}
+              placeholder={placeholder}
+              dictionary={runtime.defaultDictionary}
+              embeds={[]}
+              extensions={extensions as any}
+              hostAdapter={hostAdapter}
+              editorStyle={{
+                padding: '8px var(--editor-pad-x, 42px) 72px',
+              }}
+              onChange={(getValue: () => unknown) => {
+                const readMarkdown = () => {
+                  const nextValue = getValue();
+                  return typeof nextValue === 'string'
+                    ? nextValue
+                    : String(nextValue ?? '');
+                };
 
-              valueGetterRef.current = readMarkdown;
+                valueGetterRef.current = readMarkdown;
 
-              if (changeFrameRef.current !== null) {
-                window.cancelAnimationFrame(changeFrameRef.current);
-              }
+                if (changeFrameRef.current !== null) {
+                  window.cancelAnimationFrame(changeFrameRef.current);
+                }
 
-              changeFrameRef.current = window.requestAnimationFrame(() => {
-                changeFrameRef.current = null;
-                const nextMarkdown = readMarkdown();
+                changeFrameRef.current = window.requestAnimationFrame(() => {
+                  changeFrameRef.current = null;
+                  const nextMarkdown = readMarkdown();
 
-                if (
-                  !hasUserInteractedRef.current &&
-                  initialValueRef.current.trim().length > 0 &&
-                  nextMarkdown.trim().length === 0
-                ) {
+                  if (!hasUserInteractedRef.current) {
+                    return;
+                  }
+
+                  if (
+                    initialValueRef.current.trim().length > 0 &&
+                    nextMarkdown.trim().length === 0
+                  ) {
+                    return;
+                  }
+
+                  onChange(nextMarkdown);
+                });
+              }}
+              onBlur={onBlur}
+              onFocus={() => {
+                onFocus?.();
+              }}
+              onClickLink={(href: string) => {
+                if (onClickLink) {
+                  onClickLink(href);
                   return;
                 }
 
-                onChange(nextMarkdown);
-              });
-            }}
-            onBlur={onBlur}
-            onFocus={() => {
-              onFocus?.();
-            }}
-            onClickLink={(href: string) => {
-              if (onClickLink) {
-                onClickLink(href);
-                return;
-              }
-
-              openExternalLink(href);
-            }}
-          />
+                openExternalLink(href);
+              }}
+            />
+          ) : runtimeLoadFailed ? (
+            <div role="alert" aria-live="assertive">
+              Editor failed to load. Please refresh and try again.
+            </div>
+          ) : (
+            <div role="status" aria-live="polite">
+              Loading editor...
+            </div>
+          )}
         </ThemeProvider>
       </StyleSheetManager>
     </div>

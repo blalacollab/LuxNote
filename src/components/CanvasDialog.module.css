@@ -102,7 +102,7 @@
   overflow: hidden;
   background: transparent;
   color: #effaff;
-  font-family: var(--font-display);
+  font-family: var(--font-editor-title);
   font-size: clamp(30px, 4.2vw, 48px);
   line-height: 0.98;
   letter-spacing: 0.03em;
@@ -250,12 +250,7 @@
   padding: 0.12em 0.42em;
   border-radius: 2px;
   background: rgba(145, 241, 255, 0.08);
-  font-family:
-    'SF Mono',
-    'Monaco',
-    'Cascadia Code',
-    'Roboto Mono',
-    monospace;
+  font-family: var(--font-mono);
 }
 
 .richEditor pre {

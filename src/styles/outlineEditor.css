@@ -108,13 +108,7 @@
 
 .luxnoteOutlineEditorScope .ProseMirror code,
 .luxnoteOutlineEditorScope .ProseMirror pre {
-  font-family:
-    'SFMono-Regular',
-    Consolas,
-    'Liberation Mono',
-    Menlo,
-    Courier,
-    monospace;
+  font-family: var(--font-mono);
 }
 
 .luxnoteOutlineEditorScope .ProseMirror code {

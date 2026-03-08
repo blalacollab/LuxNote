@@ -28,7 +28,7 @@ const SHORTCUTS = [
   ['Wheel', '直接以鼠标位置缩放画板'],
   ['Drag Background', '直接拖动画布平移视图'],
   ['Drag Note', '直接移动笔记位置'],
-  ['Slash Menu', '使用 outline-editor 的完整文档插入与命令体验'],
+  ['Slash Menu', '使用本地 outline-editor 模块的完整文档插入与命令体验'],
   ['Shift + /', '调出隐藏设置笔记'],
   ['Escape', '退出查看 / 编辑界面'],
 ];
@@ -104,6 +104,12 @@ export function CanvasDialog({ dialog, note }: CanvasDialogProps) {
   const handleRequestClose = () => {
     flushDraftToStorage();
     closeDialog();
+
+    const state = useCanvasStore.getState();
+
+    if (state.isHydrated) {
+      writeSceneToLocalStorage(buildSnapshot(state));
+    }
   };
 
   useEffect(() => {

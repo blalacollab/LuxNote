@@ -1,4 +1,4 @@
-import { create } from 'zustand';
+import { createWithEqualityFn } from 'zustand/traditional';
 import { subscribeWithSelector } from 'zustand/middleware';
 
 import {
@@ -98,8 +98,23 @@ function computeNextZ(notes: Record<string, NoteRecord>): number {
   );
 }
 
+const INVISIBLE_TEXT_PATTERN =
+  /[\s\u00A0\u1680\u180E\u2000-\u200D\u2028\u2029\u202F\u205F\u3000\uFEFF]/g;
+
+function normalizeForBlankCheck(value: string): string {
+  return value
+    .replace(/<br\s*\/?>/gi, '')
+    .replace(/<\/?p>/gi, '')
+    .replace(/&nbsp;/gi, '')
+    .replace(INVISIBLE_TEXT_PATTERN, '');
+}
+
+function isBlankText(value: string): boolean {
+  return normalizeForBlankCheck(value).length === 0;
+}
+
 function isBlankNote(note: Pick<NoteRecord, 'title' | 'body'>): boolean {
-  return note.title.trim() === '' && note.body.trim() === '';
+  return isBlankText(note.title) && isBlankText(note.body);
 }
 
 function removeNoteFromState(state: CanvasStoreState, id: string) {
@@ -222,7 +237,7 @@ export function buildSnapshot(state: Pick<
   };
 }
 
-export const useCanvasStore = create<CanvasStoreState>()(
+export const useCanvasStore = createWithEqualityFn<CanvasStoreState>()(
   subscribeWithSelector((set, get) => ({
     ...createInitialState(),
 
@@ -271,13 +286,28 @@ export const useCanvasStore = create<CanvasStoreState>()(
           return state;
         }
 
-        const nextPristineDraftNoteIds = { ...state.pristineDraftNoteIds };
-        const titleChanged =
-          patch.title !== undefined && patch.title !== note.title;
-        const bodyChanged =
-          patch.body !== undefined && patch.body !== note.body;
+        const hasTitlePatch = patch.title !== undefined;
+        const hasBodyPatch = patch.body !== undefined;
 
-        if (titleChanged || bodyChanged) {
+        if (!hasTitlePatch && !hasBodyPatch) {
+          return state;
+        }
+
+        const nextTitle = hasTitlePatch ? patch.title! : note.title;
+        const nextBody = hasBodyPatch ? patch.body! : note.body;
+        const noteChanged = nextTitle !== note.title || nextBody !== note.body;
+
+        if (!noteChanged) {
+          return state;
+        }
+
+        const nextPristineDraftNoteIds = { ...state.pristineDraftNoteIds };
+        const wasSemanticallyBlank =
+          isBlankText(note.title) && isBlankText(note.body);
+        const isSemanticallyBlank =
+          isBlankText(nextTitle) && isBlankText(nextBody);
+
+        if (!(wasSemanticallyBlank && isSemanticallyBlank)) {
           delete nextPristineDraftNoteIds[id];
         }
 
@@ -286,7 +316,8 @@ export const useCanvasStore = create<CanvasStoreState>()(
             ...state.notes,
             [id]: {
               ...note,
-              ...patch,
+              title: nextTitle,
+              body: nextBody,
               updatedAt: Date.now(),
             },
           },

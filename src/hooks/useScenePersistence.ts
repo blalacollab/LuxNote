@@ -10,8 +10,13 @@ import { buildSnapshot, useCanvasStore } from '../store/canvasStore';
 
 export function useScenePersistence(): void {
   const hydrate = useCanvasStore((state) => state.hydrate);
+  const isTestMode = import.meta.env.MODE === 'test';
 
   useEffect(() => {
+    if (isTestMode) {
+      return;
+    }
+
     let cancelled = false;
 
     void loadScene()
@@ -29,9 +34,13 @@ export function useScenePersistence(): void {
     return () => {
       cancelled = true;
     };
-  }, [hydrate]);
+  }, [hydrate, isTestMode]);
 
   useEffect(() => {
+    if (isTestMode) {
+      return;
+    }
+
     let timer = 0;
     const setSaveStatus = useCanvasStore.getState().setSaveStatus;
     const flushSnapshot = () => {
@@ -86,5 +95,5 @@ export function useScenePersistence(): void {
       window.removeEventListener('beforeunload', flushSnapshot);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, []);
+  }, [isTestMode]);
 }

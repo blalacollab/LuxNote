@@ -35,8 +35,8 @@ export function InspectorPanel({
               in view, or start a connection.
             </p>
             <p>
-              The viewport keeps only nearby cards mounted, while Pixi handles the
-              grid and link rendering underneath.
+              The viewport keeps only nearby cards mounted, while Canvas 2D handles
+              the grid and link rendering underneath.
             </p>
           </div>
         </div>
