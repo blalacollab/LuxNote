@@ -211,6 +211,9 @@ export function OutlineNoteEditor({
             embeds={[]}
             extensions={extensions as any}
             hostAdapter={hostAdapter}
+            editorStyle={{
+              padding: '8px var(--editor-pad-x, 42px) 72px',
+            }}
             onChange={(getValue: () => unknown) => {
               const readMarkdown = () => {
                 const nextValue = getValue();
