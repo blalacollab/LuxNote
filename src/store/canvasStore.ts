@@ -52,6 +52,7 @@ interface CanvasStoreState {
   linkingFromId: string | null;
   draggingNoteId: string | null;
   activeDialog: DialogState;
+  pendingDeleteNoteId: string | null;
   settingsNoteVisible: boolean;
   noteMotions: Record<string, NoteMotion>;
   zoomAnimation: ZoomAnimation | null;
@@ -63,6 +64,10 @@ interface CanvasStoreState {
   updateNote: (id: string, patch: Partial<Pick<NoteRecord, 'title' | 'body'>>) => void;
   deleteNote: (id: string) => void;
   deleteSelectedNote: () => void;
+  requestDeleteNote: (id: string) => void;
+  requestDeleteSelectedNote: () => void;
+  cancelDeleteRequest: () => void;
+  confirmDeleteRequest: () => void;
   selectNote: (id: string | null) => void;
   setViewport: (viewport: ViewportSize) => void;
   bringToFront: (id: string) => void;
@@ -124,6 +129,8 @@ function removeNoteFromState(state: CanvasStoreState, id: string) {
       state.activeDialog?.type === 'note' && state.activeDialog.noteId === id
         ? null
         : state.activeDialog,
+    pendingDeleteNoteId:
+      state.pendingDeleteNoteId === id ? null : state.pendingDeleteNoteId,
     selectedNoteId: state.selectedNoteId === id ? null : state.selectedNoteId,
     linkingFromId: state.linkingFromId === id ? null : state.linkingFromId,
     draggingNoteId: state.draggingNoteId === id ? null : state.draggingNoteId,
@@ -153,6 +160,10 @@ function createInitialState(): Omit<
   | 'updateNote'
   | 'deleteNote'
   | 'deleteSelectedNote'
+  | 'requestDeleteNote'
+  | 'requestDeleteSelectedNote'
+  | 'cancelDeleteRequest'
+  | 'confirmDeleteRequest'
   | 'selectNote'
   | 'setViewport'
   | 'bringToFront'
@@ -188,6 +199,7 @@ function createInitialState(): Omit<
     linkingFromId: null,
     draggingNoteId: null,
     activeDialog: null,
+    pendingDeleteNoteId: null,
     settingsNoteVisible: false,
     noteMotions: {},
     zoomAnimation: null,
@@ -293,6 +305,43 @@ export const useCanvasStore = create<CanvasStoreState>()(
       if (id) {
         get().deleteNote(id);
       }
+    },
+
+    requestDeleteNote: (id) => {
+      if (!get().notes[id]) {
+        return;
+      }
+
+      set({
+        pendingDeleteNoteId: id,
+      });
+    },
+
+    requestDeleteSelectedNote: () => {
+      const id = get().selectedNoteId;
+
+      if (id) {
+        get().requestDeleteNote(id);
+      }
+    },
+
+    cancelDeleteRequest: () => {
+      set({
+        pendingDeleteNoteId: null,
+      });
+    },
+
+    confirmDeleteRequest: () => {
+      const id = get().pendingDeleteNoteId;
+
+      if (!id) {
+        return;
+      }
+
+      set({
+        pendingDeleteNoteId: null,
+      });
+      get().deleteNote(id);
     },
 
     selectNote: (id) => {

@@ -65,7 +65,7 @@ export function NoteCard({
   const beginLink = useCanvasStore((state) => state.beginLink);
   const cancelLink = useCanvasStore((state) => state.cancelLink);
   const completeLink = useCanvasStore((state) => state.completeLink);
-  const deleteNote = useCanvasStore((state) => state.deleteNote);
+  const requestDeleteNote = useCanvasStore((state) => state.requestDeleteNote);
   const openNoteDialog = useCanvasStore((state) => state.openNoteDialog);
   const openSettingsDialog = useCanvasStore((state) => state.openSettingsDialog);
 
@@ -234,7 +234,7 @@ export function NoteCard({
               onPointerDown={(event) => event.stopPropagation()}
               onClick={(event) => {
                 event.stopPropagation();
-                deleteNote(note.id);
+                requestDeleteNote(note.id);
               }}
             >
               ×

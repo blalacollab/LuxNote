@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -134,6 +134,52 @@ describe('note interactions', () => {
 
     const scene = JSON.parse(raw!);
     expect(scene.notes[note.id].body).toContain('Persist me');
+  });
+
+  it('requires confirmation before deleting a note', async () => {
+    const note = Object.values(useCanvasStore.getState().notes)[0];
+    const beforeCount = Object.keys(useCanvasStore.getState().notes).length;
+
+    render(<App />);
+
+    act(() => {
+      useCanvasStore.getState().requestDeleteNote(note.id);
+    });
+
+    const dialog = screen.getByRole('dialog', { name: `Delete “${note.title || 'Untitled note'}”?` });
+
+    expect(
+      within(dialog).getByRole('heading', {
+        name: `Delete “${note.title || 'Untitled note'}”?`,
+      }),
+    ).toBeInTheDocument();
+    expect(Object.keys(useCanvasStore.getState().notes)).toHaveLength(beforeCount);
+
+    fireEvent.click(within(screen.getByRole('dialog', { name: `Delete “${note.title || 'Untitled note'}”?` })).getByRole('button', { name: /^delete note$/i }));
+
+    expect(Object.keys(useCanvasStore.getState().notes).length).toBeLessThan(beforeCount);
+  });
+
+  it('cancels a pending delete request without removing the note', async () => {
+    const note = Object.values(useCanvasStore.getState().notes)[0];
+    const beforeCount = Object.keys(useCanvasStore.getState().notes).length;
+
+    render(<App />);
+
+    act(() => {
+      useCanvasStore.getState().requestDeleteNote(note.id);
+    });
+
+    fireEvent.click(within(screen.getByRole('dialog', { name: `Delete “${note.title || 'Untitled note'}”?` })).getByRole('button', { name: /^cancel$/i }));
+
+    expect(screen.queryByRole('dialog', { name: `Delete “${note.title || 'Untitled note'}”?` })).not.toBeInTheDocument();
+    expect(Object.keys(useCanvasStore.getState().notes)).toHaveLength(beforeCount);
+    expect(
+      Object.values(useCanvasStore.getState().notes).some(
+        (item) => item.title === note.title,
+      ),
+    ).toBe(true);
+    expect(useCanvasStore.getState().pendingDeleteNoteId).toBeNull();
   });
 
   it('does not pan or zoom the canvas when wheeling inside the editor', async () => {

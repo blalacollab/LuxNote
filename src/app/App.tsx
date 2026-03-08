@@ -82,6 +82,7 @@ export function App() {
     linkingFromId,
     draggingNoteId,
     activeDialog,
+    pendingDeleteNoteId,
     settingsNoteVisible,
     isHydrated,
   } = useCanvasStore(
@@ -95,11 +96,14 @@ export function App() {
       linkingFromId: state.linkingFromId,
       draggingNoteId: state.draggingNoteId,
       activeDialog: state.activeDialog,
+      pendingDeleteNoteId: state.pendingDeleteNoteId,
       settingsNoteVisible: state.settingsNoteVisible,
       isHydrated: state.isHydrated,
     }),
     shallow,
   );
+  const cancelDeleteRequest = useCanvasStore((state) => state.cancelDeleteRequest);
+  const confirmDeleteRequest = useCanvasStore((state) => state.confirmDeleteRequest);
 
   const visibleIds = useMemo(
     () => computeVisibleNoteIds(notes, camera, viewport),
@@ -108,6 +112,9 @@ export function App() {
   const selectedNote = selectedNoteId ? notes[selectedNoteId] ?? null : null;
   const dialogNote =
     activeDialog?.type === 'note' ? notes[activeDialog.noteId] ?? null : null;
+  const pendingDeleteNote = pendingDeleteNoteId
+    ? notes[pendingDeleteNoteId] ?? null
+    : null;
 
   const settingsNote = useMemo<NoteRecord | null>(() => {
     if (!settingsNoteVisible) {
@@ -439,6 +446,53 @@ export function App() {
           ) : null}
 
           <CanvasDialog dialog={activeDialog} note={dialogNote ?? selectedNote} />
+
+          {pendingDeleteNote ? (
+            <div
+              data-dialog-surface="true"
+              className={styles.confirmOverlay}
+              onClick={(event) => {
+                if (event.target === event.currentTarget) {
+                  cancelDeleteRequest();
+                }
+              }}
+            >
+              <section
+                className={styles.confirmCard}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={`delete-note-title-${pendingDeleteNote.id}`}
+              >
+                <p className={styles.confirmEyebrow}>Delete Note</p>
+                <h2
+                  id={`delete-note-title-${pendingDeleteNote.id}`}
+                  className={styles.confirmTitle}
+                >
+                  Delete “{pendingDeleteNote.title || 'Untitled note'}”?
+                </h2>
+                <p className={styles.confirmText}>
+                  This will remove the note and all of its connections from the
+                  canvas.
+                </p>
+                <div className={styles.confirmActions}>
+                  <button
+                    type="button"
+                    className={styles.confirmButton}
+                    onClick={cancelDeleteRequest}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.confirmButton} ${styles.confirmButtonDanger}`}
+                    onClick={confirmDeleteRequest}
+                  >
+                    Delete note
+                  </button>
+                </div>
+              </section>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

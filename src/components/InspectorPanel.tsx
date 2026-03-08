@@ -16,7 +16,7 @@ export function InspectorPanel({
   connections,
 }: InspectorPanelProps) {
   const updateNote = useCanvasStore((state) => state.updateNote);
-  const deleteSelectedNote = useCanvasStore((state) => state.deleteSelectedNote);
+  const requestDeleteSelectedNote = useCanvasStore((state) => state.requestDeleteSelectedNote);
   const beginLink = useCanvasStore((state) => state.beginLink);
   const cancelLink = useCanvasStore((state) => state.cancelLink);
   const focusNote = useCanvasStore((state) => state.focusNote);
@@ -84,7 +84,7 @@ export function InspectorPanel({
           <button
             type="button"
             className={styles.button}
-            onClick={deleteSelectedNote}
+            onClick={requestDeleteSelectedNote}
           >
             Delete
           </button>

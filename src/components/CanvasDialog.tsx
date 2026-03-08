@@ -36,7 +36,7 @@ const SHORTCUTS = [
 export function CanvasDialog({ dialog, note }: CanvasDialogProps) {
   const closeDialog = useCanvasStore((state) => state.closeDialog);
   const updateNote = useCanvasStore((state) => state.updateNote);
-  const deleteSelectedNote = useCanvasStore((state) => state.deleteSelectedNote);
+  const requestDeleteNote = useCanvasStore((state) => state.requestDeleteNote);
   const hudVisible = useCanvasStore((state) => state.preferences.hudVisible);
   const setHudVisible = useCanvasStore((state) => state.setHudVisible);
 
@@ -194,8 +194,7 @@ export function CanvasDialog({ dialog, note }: CanvasDialogProps) {
                 className={styles.navButton}
                 data-danger="true"
                 onClick={() => {
-                  deleteSelectedNote();
-                  closeDialog();
+                  requestDeleteNote(note.id);
                 }}
               >
                 Delete
