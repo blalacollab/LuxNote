@@ -12,7 +12,6 @@ import type { Primitive } from "utility-types";
 import { getEventFiles } from "../../utils/files";
 import { sanitizeUrl } from "../../utils/urls";
 import { AttachmentValidation } from "../../validations";
-import type { Options } from "../commands/insertFiles";
 import insertFiles from "../commands/insertFiles";
 import { default as ImageComponent } from "../components/Image";
 import type { MarkdownSerializerState } from "../lib/markdown/serializer";
@@ -23,10 +22,6 @@ import Node from "./Node";
 import { LightboxImageFactory } from "../lib/Lightbox";
 
 export default class SimpleImage extends Node {
-  options: Options & {
-    userId?: string;
-  };
-
   get name() {
     return "image";
   }

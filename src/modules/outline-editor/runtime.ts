@@ -19,4 +19,4 @@ export type {
   EditorUploadAdapter,
   MentionNotificationValidationResult,
   ResolvedInternalLink,
-} from './dist/index.js';
+} from 'outline-editor-local-runtime';

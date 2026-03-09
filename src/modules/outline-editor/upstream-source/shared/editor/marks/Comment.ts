@@ -10,6 +10,8 @@ import { isMarkActive } from "../queries/isMarkActive";
 import { EditorStyleHelper } from "../styles/EditorStyleHelper";
 import Mark from "./Mark";
 
+const FALLBACK_USER_ID = "luxnote-local-user";
+
 export default class Comment extends Mark {
   get name() {
     return "comment";
@@ -92,7 +94,7 @@ export default class Comment extends Mark {
         chainTransactions(
           toggleMark(type, {
             id: uuidv4(),
-            userId: this.options.userId,
+            userId: this.options?.userId ?? FALLBACK_USER_ID,
             draft: true,
           }),
           collapseSelection()
@@ -105,7 +107,8 @@ export default class Comment extends Mark {
 
   commands() {
     return this.options.onCreateCommentMark
-      ? (): Command => addComment({ userId: this.options.userId })
+      ? (): Command =>
+          addComment({ userId: this.options?.userId ?? FALLBACK_USER_ID })
       : undefined;
   }
 
@@ -178,7 +181,8 @@ export default class Comment extends Mark {
               const resolved = comment.getAttribute("data-resolved");
               const draftByUser =
                 comment.getAttribute("data-draft") &&
-                comment.getAttribute("data-user-id") === this.options.userId;
+                comment.getAttribute("data-user-id") ===
+                  (this.options?.userId ?? FALLBACK_USER_ID);
 
               if ((commentId && !resolved) || draftByUser) {
                 this.options?.onClickCommentMark?.(commentId);

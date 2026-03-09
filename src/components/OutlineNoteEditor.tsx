@@ -33,7 +33,13 @@ function openExternalLink(href: string): void {
   window.open(href, '_blank', 'noopener,noreferrer');
 }
 
-const blockedDomProps = new Set(['active', 'arrow', 'commenting']);
+const blockedDomProps = new Set([
+  'active',
+  'arrow',
+  'commenting',
+  'userId',
+  'editorStyle',
+]);
 type OutlineRuntimeModule = Awaited<ReturnType<typeof loadOutlineEditorRuntime>>;
 
 function shouldForwardProp(propName: string, target: unknown) {
@@ -69,6 +75,7 @@ export function OutlineNoteEditor({
   const valueGetterRef = useRef<(() => string) | null>(null);
   const initialValueRef = useRef('');
   const readLiveMarkdownRef = useRef<() => string>(() => '');
+  const runtimeUserId = 'luxnote-local-user';
   const initialValue = value || defaultValue;
   const theme = useMemo(() => createOutlineTheme(), []);
   const RuntimeEditor = runtime?.Editor as any;
@@ -234,6 +241,7 @@ export function OutlineNoteEditor({
               ref={editorRef as any}
               key={editorKey}
               id={`luxnote-outline-editor-${editorKey}`}
+              userId={runtimeUserId}
               defaultValue={initialValue}
               placeholder={placeholder}
               dictionary={runtime.defaultDictionary}

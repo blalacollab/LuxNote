@@ -8,7 +8,9 @@
     "moduleResolution": "Bundler",
     "baseUrl": ".",
     "paths": {
-      "outline-editor-local-runtime": ["./src/modules/outline-editor/dist/index"]
+      "outline-editor-local-runtime": [
+        "./src/modules/outline-editor/upstream-source/public/index.d.ts"
+      ]
     },
     "allowImportingTsExtensions": false,
     "resolveJsonModule": true,

@@ -22,6 +22,7 @@ import { addComment } from "../commands/comment";
 import { addLink } from "../commands/link";
 
 const imageSizeRegex = /\s=(\d+)?x(\d+)?$/;
+const FALLBACK_USER_ID = "luxnote-local-user";
 
 type TitleAttributes = {
   layoutClass?: string;
@@ -450,7 +451,9 @@ export default class Image extends SimpleImage {
 
   keys(): Record<string, Command> {
     return {
-      "Mod-Alt-m": addComment({ userId: this.options.userId }),
+      "Mod-Alt-m": addComment({
+        userId: this.options?.userId ?? FALLBACK_USER_ID,
+      }),
     };
   }
 
@@ -546,7 +549,7 @@ export default class Image extends SimpleImage {
           return true;
         },
       commentOnImage: (): Command =>
-        addComment({ userId: this.options.userId }),
+        addComment({ userId: this.options?.userId ?? FALLBACK_USER_ID }),
       linkOnImage: (): Command => addLink({ href: "" }),
     };
   }

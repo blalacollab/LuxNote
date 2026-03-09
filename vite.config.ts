@@ -2,12 +2,27 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { fileURLToPath, URL } from 'node:url';
 
-const outlineEditorRuntimePath = fileURLToPath(
-  new URL('./src/modules/outline-editor/dist/index.cjs', import.meta.url),
+const outlineEditorAppPath = fileURLToPath(
+  new URL('./src/modules/outline-editor/upstream-source/app', import.meta.url),
+);
+const outlineEditorSharedPath = fileURLToPath(
+  new URL('./src/modules/outline-editor/upstream-source/shared', import.meta.url),
+);
+const outlineEditorPublicPath = fileURLToPath(
+  new URL('./src/modules/outline-editor/upstream-source/public/index.ts', import.meta.url),
 );
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react({
+      babel: {
+        plugins: [
+          ['@babel/plugin-proposal-decorators', { legacy: true }],
+          ['@babel/plugin-proposal-class-properties', { loose: true }],
+        ],
+      },
+    }),
+  ],
   resolve: {
     preserveSymlinks: true,
     dedupe: [
@@ -20,12 +35,21 @@ export default defineConfig({
     alias: [
       {
         find: 'outline-editor-local-runtime',
-        replacement: outlineEditorRuntimePath,
+        replacement: outlineEditorPublicPath,
+      },
+      {
+        find: '~/',
+        replacement: `${outlineEditorAppPath}/`,
+      },
+      {
+        find: '@shared/',
+        replacement: `${outlineEditorSharedPath}/`,
       },
     ],
   },
   optimizeDeps: {
-    include: ['styled-components', 'outline-editor-local-runtime'],
+    include: ['styled-components'],
+    exclude: ['outline-editor-local-runtime'],
     esbuildOptions: {
       define: {
         global: 'globalThis',

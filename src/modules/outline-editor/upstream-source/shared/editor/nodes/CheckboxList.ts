@@ -35,7 +35,7 @@ export default class CheckboxList extends Node {
   }
 
   get plugins() {
-    const userIdentifier = this.editor.props.userId;
+    const userIdentifier = this.editor?.props?.userId ?? "luxnote-local-user";
     const dictionary = this.editor.props.dictionary;
 
     // Plugin to auto-assign IDs to checkbox lists
@@ -71,7 +71,7 @@ export default class CheckboxList extends Node {
               node,
               view,
               getPos,
-              userIdentifier || "",
+              userIdentifier,
               dictionary
             ),
         },

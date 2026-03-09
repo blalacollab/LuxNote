@@ -60,6 +60,7 @@ export const toggleFoldPluginKey = new PluginKey<ToggleFoldState>("toggleFold");
 
 /** Plugin key for toggle block fold/unfold events. */
 export const toggleEventPluginKey = new PluginKey("toggleBlockEvent");
+const FALLBACK_USER_ID = "luxnote-local-user";
 
 export default class ToggleBlock extends Node {
   get name() {
@@ -92,7 +93,7 @@ export default class ToggleBlock extends Node {
   }
 
   get plugins() {
-    const userId = this.editor.props.userId;
+    const userId = this.editor?.props?.userId ?? FALLBACK_USER_ID;
 
     // Assign IDs, fix positions, auto-fold empty
     const fixToggleBlocksPlugin = new Plugin({
@@ -459,7 +460,10 @@ export default class ToggleBlock extends Node {
         if (!wrapping) {
           return false;
         }
-        Storage.set(`${id}:${this.editor.props.userId}`, { fold: false });
+        Storage.set(
+          `${id}:${this.editor?.props?.userId ?? FALLBACK_USER_ID}`,
+          { fold: false }
+        );
         const tr = state.tr.wrap(range!, wrapping);
         dispatch?.(tr);
         return true;
@@ -473,7 +477,10 @@ export default class ToggleBlock extends Node {
           return false;
         }
 
-        Storage.set(`${id}:${this.editor.props.userId}`, { fold: false });
+        Storage.set(
+          `${id}:${this.editor?.props?.userId ?? FALLBACK_USER_ID}`,
+          { fold: false }
+        );
         const tr = state.tr.wrap(range!, wrapping);
         dispatch?.(
           tr.insert(
@@ -503,7 +510,7 @@ export default class ToggleBlock extends Node {
   private initFoldedIds(state: EditorState) {
     const pluginState = toggleFoldPluginKey.getState(state);
     const foldedIds = new Set<string>(pluginState?.foldedIds);
-    const userId = this.editor.props.userId;
+    const userId = this.editor?.props?.userId ?? FALLBACK_USER_ID;
     findBlockNodes(state.doc, true)
       .filter((b) => b.node.type.name === this.name && b.node.attrs.id)
       .forEach((block) => {
