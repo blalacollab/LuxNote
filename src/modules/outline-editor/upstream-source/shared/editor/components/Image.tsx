@@ -118,7 +118,7 @@ const Image = (props: Props) => {
   return (
     <div contentEditable={false} className={className} ref={ref}>
       <ImageWrapper
-        isFullWidth={isFullWidth}
+        $isFullWidth={isFullWidth}
         className={
           isSelected || dragging
             ? "image-wrapper ProseMirror-selectednode"
@@ -319,20 +319,20 @@ const Button = styled.button`
   }
 `;
 
-const ImageWrapper = styled.div<{ isFullWidth: boolean }>`
+const ImageWrapper = styled.div<{ $isFullWidth: boolean }>`
   line-height: 0;
   position: relative;
   margin-left: auto;
   margin-right: auto;
-  max-width: ${(props) => (props.isFullWidth ? "initial" : "100%")};
+  max-width: ${(props) => (props.$isFullWidth ? "initial" : "100%")};
   transition-property: width, height;
-  transition-duration: ${(props) => (props.isFullWidth ? "0ms" : "150ms")};
+  transition-duration: ${(props) => (props.$isFullWidth ? "0ms" : "150ms")};
   transition-timing-function: ease-in-out;
   overflow: hidden;
 
   img {
     transition-property: width, height;
-    transition-duration: ${(props) => (props.isFullWidth ? "0ms" : "150ms")};
+    transition-duration: ${(props) => (props.$isFullWidth ? "0ms" : "150ms")};
     transition-timing-function: ease-in-out;
   }
 

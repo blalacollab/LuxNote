@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { outlineEmbeds } from '../lib/outlineEmbeds';
 import { OutlineNoteEditor } from '../components/OutlineNoteEditor';
 import {
   getLastOutlineEditorProps,
@@ -31,7 +32,8 @@ describe('OutlineNoteEditor', () => {
     const props = getLastOutlineEditorProps() as Record<string, unknown>;
     expect(props).toBeTruthy();
     expect(props.dictionary).toBeTruthy();
-    expect(props.embeds).toEqual([]);
+    expect(props.embeds).toBe(outlineEmbeds);
+    expect(typeof props.uploadFile).toBe('function');
     expect(typeof props.hostAdapter).toBe('object');
     expect(getLastPresetOptions()).toEqual({
       enableFindAndReplace: true,

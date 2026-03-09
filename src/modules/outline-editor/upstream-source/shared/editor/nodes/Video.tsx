@@ -4,17 +4,22 @@ import type {
   NodeType,
   Node as ProsemirrorNode,
 } from "prosemirror-model";
-import { NodeSelection, TextSelection } from "prosemirror-state";
+import { NodeSelection, TextSelection, type Command } from "prosemirror-state";
 import * as React from "react";
 import type { Primitive } from "utility-types";
 import { sanitizeUrl } from "../../utils/urls";
-import toggleWrap from "../commands/toggleWrap";
 import Caption from "../components/Caption";
 import VideoComponent from "../components/Video";
 import type { MarkdownSerializerState } from "../lib/markdown/serializer";
 import attachmentsRule from "../rules/links";
 import type { ComponentProps } from "../types";
 import Node from "./Node";
+
+function parseDimension(value: string | null | undefined) {
+  const nextValue = parseInt(value ?? "", 10);
+
+  return Number.isFinite(nextValue) && nextValue > 0 ? nextValue : null;
+}
 
 export default class Video extends Node {
   get name() {
@@ -59,8 +64,8 @@ export default class Video extends Node {
             id: dom.id,
             title: dom.getAttribute("title"),
             src: dom.getAttribute("src"),
-            width: parseInt(dom.getAttribute("width") ?? "", 10),
-            height: parseInt(dom.getAttribute("height") ?? "", 10),
+            width: parseDimension(dom.getAttribute("width")),
+            height: parseDimension(dom.getAttribute("height")),
           }),
         },
       ],
@@ -177,13 +182,21 @@ export default class Video extends Node {
   );
 
   commands({ type }: { type: NodeType }) {
-    return (attrs: Record<string, Primitive>) => toggleWrap(type, attrs);
+    return (attrs: Record<string, Primitive>): Command => (state, dispatch) => {
+      dispatch?.(
+        state.tr.replaceSelectionWith(type.create(attrs)).scrollIntoView()
+      );
+      return true;
+    };
   }
 
   toMarkdown(state: MarkdownSerializerState, node: ProsemirrorNode) {
+    const width = node.attrs.width ?? 0;
+    const height = node.attrs.height ?? 0;
+
     state.ensureNewLine();
     state.write(
-      `[${node.attrs.title} ${node.attrs.width}x${node.attrs.height}](${node.attrs.src})\n\n`
+      `[${node.attrs.title} ${width}x${height}](${node.attrs.src})\n\n`
     );
     state.ensureNewLine();
   }
@@ -194,8 +207,8 @@ export default class Video extends Node {
       getAttrs: (tok: Token) => ({
         src: tok.attrGet("src"),
         title: tok.attrGet("title"),
-        width: parseInt(tok.attrGet("width") ?? "", 10),
-        height: parseInt(tok.attrGet("height") ?? "", 10),
+        width: parseDimension(tok.attrGet("width")),
+        height: parseDimension(tok.attrGet("height")),
       }),
     };
   }

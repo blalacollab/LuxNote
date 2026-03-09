@@ -25,21 +25,9 @@ import {
   CollapseIcon,
 } from "outline-icons";
 import * as React from "react";
-import styled from "styled-components";
-import Image from "@shared/editor/components/Img";
 import type { MenuItem } from "@shared/editor/types";
 import { metaDisplay } from "@shared/utils/keyboard";
 import type { Dictionary } from "~/hooks/useDictionary";
-import Desktop from "~/utils/Desktop";
-
-const Img = styled(Image)`
-  border-radius: 2px;
-  background: #fff;
-  box-shadow: 0 0 0 1px #fff;
-  margin: 4px;
-  width: 18px;
-  height: 18px;
-`;
 
 export default function blockMenuItems(
   dictionary: Dictionary,
@@ -231,19 +219,6 @@ export default function blockMenuItems(
       name: "separator",
     },
     {
-      name: "code_block",
-      title: "Mermaid Diagram",
-      icon: <Img src="/images/mermaidjs.png" alt="Mermaid Diagram" />,
-      keywords: "diagram flowchart",
-      attrs: { language: "mermaid" },
-    },
-    {
-      name: "editDiagram",
-      title: "Diagrams.net Diagram",
-      icon: <Img src="/images/diagrams.png" alt="Diagrams.net Diagram" />,
-      keywords: "diagram flowchart draw.io",
-    },
-    {
       name: "container_toggle",
       title: dictionary.toggleBlock,
       icon: <CollapseIcon />,
@@ -251,8 +226,5 @@ export default function blockMenuItems(
     },
   ];
 
-  // Filter out diagrams.net in desktop app
-  return Desktop.isElectron()
-    ? items.filter((item) => item.name !== "editDiagram")
-    : items;
+  return items;
 }

@@ -53,7 +53,6 @@ interface CanvasStoreState {
   draggingNoteId: string | null;
   activeDialog: DialogState;
   pendingDeleteNoteId: string | null;
-  settingsNoteVisible: boolean;
   noteMotions: Record<string, NoteMotion>;
   zoomAnimation: ZoomAnimation | null;
   nextZ: number;
@@ -84,7 +83,6 @@ interface CanvasStoreState {
   openNoteDialog: (id: string) => void;
   openSettingsDialog: () => void;
   closeDialog: () => void;
-  toggleSettingsNote: () => void;
   setHudVisible: (visible: boolean) => void;
   setSaveStatus: (status: SaveStatus) => void;
   hydrate: (scene: PersistedScene | null) => void;
@@ -195,7 +193,6 @@ function createInitialState(): Omit<
   | 'openNoteDialog'
   | 'openSettingsDialog'
   | 'closeDialog'
-  | 'toggleSettingsNote'
   | 'setHudVisible'
   | 'setSaveStatus'
   | 'hydrate'
@@ -215,7 +212,6 @@ function createInitialState(): Omit<
     draggingNoteId: null,
     activeDialog: null,
     pendingDeleteNoteId: null,
-    settingsNoteVisible: false,
     noteMotions: {},
     zoomAnimation: null,
     saveStatus: 'idle',
@@ -585,7 +581,6 @@ export const useCanvasStore = createWithEqualityFn<CanvasStoreState>()(
           type: 'settings',
         },
         linkingFromId: null,
-        settingsNoteVisible: false,
       });
     },
 
@@ -604,16 +599,6 @@ export const useCanvasStore = createWithEqualityFn<CanvasStoreState>()(
 
         return { activeDialog: null };
       });
-    },
-
-    toggleSettingsNote: () => {
-      set((state) => ({
-        settingsNoteVisible: !state.settingsNoteVisible,
-        activeDialog:
-          state.activeDialog?.type === 'settings' && state.settingsNoteVisible
-            ? null
-            : state.activeDialog,
-      }));
     },
 
     setHudVisible: (visible) => {
@@ -640,7 +625,6 @@ export const useCanvasStore = createWithEqualityFn<CanvasStoreState>()(
         linkingFromId: null,
         draggingNoteId: null,
         activeDialog: null,
-        settingsNoteVisible: false,
         noteMotions: {},
         zoomAnimation: null,
         saveStatus: 'idle',

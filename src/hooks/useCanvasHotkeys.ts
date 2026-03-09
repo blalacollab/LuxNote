@@ -41,6 +41,7 @@ export function useCanvasHotkeys(): boolean {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const store = useCanvasStore.getState();
+      const typingTarget = isTypingTarget(event.target);
 
       if (event.code === 'Escape') {
         if (store.pendingDeleteNoteId) {
@@ -56,6 +57,10 @@ export function useCanvasHotkeys(): boolean {
         }
       }
 
+      if (store.pendingDeleteNoteId || store.activeDialog) {
+        return;
+      }
+
       if ((event.ctrlKey || event.metaKey) && event.code === 'KeyN') {
         event.preventDefault();
         const id = store.createNote();
@@ -63,27 +68,15 @@ export function useCanvasHotkeys(): boolean {
         return;
       }
 
-      if (event.code === 'Slash' && event.shiftKey) {
-        event.preventDefault();
-        store.toggleSettingsNote();
-        return;
-      }
-
-      if ((event.ctrlKey || event.metaKey) && event.code === 'Comma') {
-        event.preventDefault();
-        store.toggleSettingsNote();
-        return;
-      }
-
       if (event.code === 'Space') {
-        if (!isTypingTarget(event.target)) {
+        if (!typingTarget) {
           event.preventDefault();
           setSpacePressed(true);
         }
         return;
       }
 
-      if (isTypingTarget(event.target)) {
+      if (typingTarget) {
         return;
       }
 
@@ -110,9 +103,6 @@ export function useCanvasHotkeys(): boolean {
         case 'Escape':
           store.cancelLink();
           store.selectNote(null);
-          if (store.settingsNoteVisible) {
-            store.toggleSettingsNote();
-          }
           setSpacePressed(false);
           break;
         default:

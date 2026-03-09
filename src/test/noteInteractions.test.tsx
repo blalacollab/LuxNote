@@ -216,6 +216,19 @@ describe('note interactions', () => {
     expect(useCanvasStore.getState().camera).toEqual(before);
   });
 
+  it('opens settings from the bottom-left status dock', async () => {
+    const user = userEvent.setup();
+
+    await renderAppWithSettledEffects();
+
+    await user.click(screen.getByRole('button', { name: /open settings/i }));
+
+    expect(useCanvasStore.getState().activeDialog).toEqual({
+      type: 'settings',
+    });
+    expect(screen.getByRole('heading', { name: /control archive/i })).toBeInTheDocument();
+  });
+
   it('removes a pristine blank draft note when its dialog closes', () => {
     const store = useCanvasStore.getState();
     const id = store.createNote();

@@ -46,6 +46,18 @@ describe('useCanvasHotkeys', () => {
     expect(screen.getByLabelText('note-count')).toHaveTextContent('3');
   });
 
+  it('does not hijack question-mark input while typing in a textarea', async () => {
+    const user = userEvent.setup();
+    render(<HotkeyHarness />);
+
+    const editor = screen.getByLabelText('editor');
+    await user.click(editor);
+    await user.keyboard('?');
+
+    expect(editor).toHaveValue('?');
+    expect(useCanvasStore.getState().activeDialog).toBeNull();
+  });
+
   it('treats descendants inside contenteditable editors as typing targets', () => {
     const host = document.createElement('div');
     const child = document.createElement('span');
@@ -73,5 +85,21 @@ describe('useCanvasHotkeys', () => {
     await user.keyboard('{Backspace}');
 
     expect(screen.getByLabelText('note-count')).toHaveTextContent('3');
+  });
+
+  it('does not open the selected note while delete confirmation is pending', async () => {
+    const user = userEvent.setup();
+    render(<HotkeyHarness />);
+
+    const selectedNoteId = Object.keys(useCanvasStore.getState().notes)[0] ?? null;
+    useCanvasStore.setState({
+      selectedNoteId,
+      pendingDeleteNoteId: selectedNoteId,
+    });
+
+    await user.keyboard('{Enter}');
+
+    expect(useCanvasStore.getState().activeDialog).toBeNull();
+    expect(useCanvasStore.getState().pendingDeleteNoteId).toBe(selectedNoteId);
   });
 });

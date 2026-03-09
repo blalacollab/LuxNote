@@ -9,7 +9,7 @@ import { useAnimationLoop } from '../hooks/useAnimationLoop';
 import { useCanvasHotkeys } from '../hooks/useCanvasHotkeys';
 import { useScenePersistence } from '../hooks/useScenePersistence';
 import { useViewportSync } from '../hooks/useViewportSync';
-import type { NoteRecord, Vec2 } from '../lib/types';
+import type { Vec2 } from '../lib/types';
 import { useCanvasStore } from '../store/canvasStore';
 import { CanvasStage } from '../components/CanvasStage';
 import { CanvasDialog } from '../components/CanvasDialog';
@@ -83,7 +83,6 @@ export function App() {
     draggingNoteId,
     activeDialog,
     pendingDeleteNoteId,
-    settingsNoteVisible,
     isHydrated,
   } = useCanvasStore(
     (state) => ({
@@ -97,13 +96,13 @@ export function App() {
       draggingNoteId: state.draggingNoteId,
       activeDialog: state.activeDialog,
       pendingDeleteNoteId: state.pendingDeleteNoteId,
-      settingsNoteVisible: state.settingsNoteVisible,
       isHydrated: state.isHydrated,
     }),
     shallow,
   );
   const cancelDeleteRequest = useCanvasStore((state) => state.cancelDeleteRequest);
   const confirmDeleteRequest = useCanvasStore((state) => state.confirmDeleteRequest);
+  const openSettingsDialog = useCanvasStore((state) => state.openSettingsDialog);
 
   const visibleIds = useMemo(
     () => computeVisibleNoteIds(notes, camera, viewport),
@@ -115,25 +114,6 @@ export function App() {
   const pendingDeleteNote = pendingDeleteNoteId
     ? notes[pendingDeleteNoteId] ?? null
     : null;
-
-  const settingsNote = useMemo<NoteRecord | null>(() => {
-    if (!settingsNoteVisible) {
-      return null;
-    }
-
-    return {
-      id: '__settings__',
-      title: 'Control Archive',
-      body: 'Hidden system entry. Open to configure the HUD and view the interaction manual.',
-      x: camera.x - NOTE_WIDTH / 2,
-      y: camera.y - NOTE_HEIGHT / 2 - 72,
-      width: NOTE_WIDTH,
-      height: NOTE_HEIGHT,
-      z: Number.MAX_SAFE_INTEGER,
-      createdAt: 0,
-      updatedAt: 0,
-    };
-  }, [camera.x, camera.y, settingsNoteVisible]);
 
   const toWorld = (clientX: number, clientY: number): Vec2 => {
     const rect = viewportRef.current?.getBoundingClientRect();
@@ -392,40 +372,34 @@ export function App() {
                 />
               );
             })}
-
-            {settingsNote ? (
-              <NoteCard
-                key={settingsNote.id}
-                camera={camera}
-                viewport={viewport}
-                note={settingsNote}
-                isDragging={false}
-                isSelected={activeDialog?.type === 'settings'}
-                isLinkSource={false}
-                linkingFromId={null}
-                spacePressed={spacePressed}
-                toWorld={toWorld}
-                isSystem
-              />
-            ) : null}
           </div>
 
-          {preferences.hudVisible ? (
-            <div
-              data-hud="true"
-              className={[
-                styles.hud,
-                isHudPeekVisible ? styles.hudVisible : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
+          <div data-hud="true" className={styles.hud}>
+            <button
+              type="button"
+              className={styles.hudButton}
+              aria-label="Open settings"
+              aria-haspopup="dialog"
+              onClick={openSettingsDialog}
             >
-              <span className={styles.hudItem}>{camera.zoom.toFixed(2)}x</span>
-              <span className={styles.hudItem}>
-                X {Math.round(camera.x)} / Y {Math.round(camera.y)}
-              </span>
-            </div>
-          ) : null}
+              Settings
+            </button>
+            {preferences.hudVisible ? (
+              <div
+                className={[
+                  styles.hudPanel,
+                  isHudPeekVisible ? styles.hudPanelVisible : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              >
+                <span className={styles.hudItem}>{camera.zoom.toFixed(2)}x</span>
+                <span className={styles.hudItem}>
+                  X {Math.round(camera.x)} / Y {Math.round(camera.y)}
+                </span>
+              </div>
+            ) : null}
+          </div>
 
           {linkingFromId ? (
             <div className={styles.linkBanner}>

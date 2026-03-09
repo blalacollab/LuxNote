@@ -1,6 +1,11 @@
 import type { Token } from "markdown-it";
 import type MarkdownIt from "markdown-it";
 import env from "../../env";
+import {
+  isDirectVideoUrl,
+  isPersistedAssetUrl,
+  isVideoDimensionToken,
+} from "../lib/media";
 
 function isParagraph(token: Token) {
   return token.type === "paragraph_open";
@@ -25,6 +30,7 @@ function isAttachment(token: Token) {
   }
 
   return (
+    isPersistedAssetUrl(href) ||
     // internal
     // external (public share are pre-signed and this is a reasonable way of detecting them)
     href?.startsWith("/api/attachments.redirect") ||
@@ -64,16 +70,24 @@ export default function linksToNodes(md: MarkdownIt) {
 
           // of hey, we found a link – lets check to see if it should be
           // converted to a file attachment
-          if (insideLink && isAttachment(insideLink)) {
+          if (insideLink) {
             const { content } = current;
             const parts = content.split(" ");
             const size = parts.pop();
             const title = parts.join(" ");
+            const href = insideLink.attrGet("href") || "";
+            const shouldConvertToAttachment = isAttachment(insideLink);
+            const shouldConvertToVideo =
+              isVideoDimensionToken(size) && isDirectVideoUrl(href);
 
-            if (size?.includes("x")) {
+            if (!shouldConvertToVideo && !shouldConvertToAttachment) {
+              continue;
+            }
+
+            if (shouldConvertToVideo) {
               // convert to video
               const token = new state.Token("video", "video", 0);
-              token.attrSet("src", insideLink.attrGet("href") || "");
+              token.attrSet("src", href);
               token.attrSet("width", size.split("x")[0] || "0");
               token.attrSet("height", size.split("x")[1] || "0");
               token.attrSet("title", title);
@@ -81,7 +95,7 @@ export default function linksToNodes(md: MarkdownIt) {
             } else {
               // convert to attachment token
               const token = new state.Token("attachment", "a", 0);
-              token.attrSet("href", insideLink.attrGet("href") || "");
+              token.attrSet("href", href);
               token.attrSet("size", size || "0");
               token.attrSet("title", title);
               tokens.splice(i - 1, 3, token);

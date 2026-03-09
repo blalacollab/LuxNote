@@ -29,7 +29,7 @@ const SHORTCUTS = [
   ['Drag Background', '直接拖动画布平移视图'],
   ['Drag Note', '直接移动笔记位置'],
   ['Slash Menu', '使用本地 outline-editor 模块的完整文档插入与命令体验'],
-  ['Shift + /', '调出隐藏设置笔记'],
+  ['Settings Button', '点击左下角状态栏中的 Settings 打开设置面板'],
   ['Escape', '退出查看 / 编辑界面'],
 ];
 
@@ -294,9 +294,9 @@ export function CanvasDialog({ dialog, note }: CanvasDialogProps) {
 
               <div className={styles.settingRow}>
                 <div>
-                  <strong>Show status bar</strong>
+                  <strong>Show status metrics</strong>
                   <p className={styles.hint}>
-                    左下角仅显示缩放倍数和当前视口中心坐标，默认隐藏，鼠标靠近角落时浮出。
+                    左下角 Settings 按钮始终保留；关闭后只隐藏缩放倍数和当前视口中心坐标。
                   </p>
                 </div>
                 <input

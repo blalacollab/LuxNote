@@ -8,7 +8,6 @@ import {
   getMarkRangeNodeSelection,
 } from "@shared/editor/queries/getMarkRange";
 import { isInCode } from "@shared/editor/queries/isInCode";
-import { isInNotice } from "@shared/editor/queries/isInNotice";
 import { isNodeActive } from "@shared/editor/queries/isNodeActive";
 import {
   getColumnIndex,
@@ -25,7 +24,6 @@ import getCodeMenuItems from "../menus/code";
 import getDividerMenuItems from "../menus/divider";
 import getFormattingMenuItems from "../menus/formatting";
 import getImageMenuItems from "../menus/image";
-import getNoticeMenuItems from "../menus/notice";
 import getReadOnlyMenuItems from "../menus/readOnly";
 import getTableMenuItems from "../menus/table";
 import getTableColMenuItems from "../menus/tableCol";
@@ -103,7 +101,6 @@ export function SelectionToolbar(props: Props) {
     selection instanceof NodeSelection && selection.node.type.name === "embed";
 
   const isCodeSelection = isInCode(state, { onlyBlock: true });
-  const isNoticeSelection = isInNotice(state);
 
   React.useLayoutEffect(() => {
     if (!isActive) {
@@ -123,8 +120,6 @@ export function SelectionToolbar(props: Props) {
       setActiveToolbar(Toolbar.Menu);
     } else if (!selection.empty) {
       setActiveToolbar(Toolbar.Menu);
-    } else if (isNoticeSelection && selection.empty) {
-      setActiveToolbar(Toolbar.Menu);
     } else if (selection.empty) {
       setActiveToolbar(null);
     }
@@ -135,7 +130,6 @@ export function SelectionToolbar(props: Props) {
     linkMark,
     isEmbedSelection,
     isCodeSelection,
-    isNoticeSelection,
   ]);
 
   React.useLayoutEffect(() => {
@@ -265,9 +259,6 @@ export function SelectionToolbar(props: Props) {
     items = getDividerMenuItems(state, readOnly, dictionary);
   } else if (readOnly) {
     items = getReadOnlyMenuItems(state, !!canUpdate, dictionary);
-  } else if (isNoticeSelection && selection.empty) {
-    items = getNoticeMenuItems(state, readOnly, dictionary);
-    align = "end";
   } else {
     items = getFormattingMenuItems(state, isTemplate, dictionary);
   }

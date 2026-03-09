@@ -59,10 +59,56 @@
   bottom: 12px;
   z-index: 4;
   display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  max-width: min(360px, calc(100% - 24px));
+  pointer-events: none;
+}
+
+.hudButton,
+.hudItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  border: 1px solid rgba(160, 216, 228, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  background: rgba(9, 13, 16, 0.76);
+  color: rgba(216, 235, 241, 0.78);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.hudButton {
+  min-height: 38px;
+  padding: 0 12px;
+  cursor: pointer;
+  pointer-events: auto;
+  background:
+    linear-gradient(180deg, rgba(16, 21, 25, 0.96), rgba(9, 13, 16, 0.92)),
+    linear-gradient(135deg, rgba(145, 241, 255, 0.06), transparent 36%);
+  color: rgba(235, 248, 252, 0.9);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    background-color 160ms ease;
+}
+
+.hudButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(181, 239, 255, 0.24);
+  background:
+    linear-gradient(180deg, rgba(18, 25, 29, 0.98), rgba(12, 17, 21, 0.94)),
+    linear-gradient(135deg, rgba(145, 241, 255, 0.08), transparent 36%);
+}
+
+.hudPanel {
+  display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  max-width: min(320px, calc(100% - 24px));
   padding: 7px 8px;
   border: 1px solid rgba(174, 224, 235, 0.12);
   border-radius: 8px;
@@ -79,25 +125,10 @@
     transform 160ms ease;
 }
 
-.hudVisible {
+.hudPanelVisible {
   opacity: 1;
   transform: translate3d(0, 0, 0);
   pointer-events: auto;
-}
-
-.hudItem {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 24px;
-  border: 1px solid rgba(160, 216, 228, 0.1);
-  border-radius: 4px;
-  padding: 4px 8px;
-  background: rgba(9, 13, 16, 0.76);
-  color: rgba(216, 235, 241, 0.78);
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .linkBanner {
@@ -237,6 +268,10 @@
     left: 12px;
     bottom: 12px;
     max-width: calc(100% - 24px);
+  }
+
+  .hudPanel {
+    max-width: calc(100vw - 112px);
   }
 
   .linkBanner {

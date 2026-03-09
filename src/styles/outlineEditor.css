@@ -37,6 +37,7 @@
 .luxnoteOutlineEditorScope .ProseMirror > p,
 .luxnoteOutlineEditorScope .ProseMirror > ul,
 .luxnoteOutlineEditorScope .ProseMirror > ol,
+.luxnoteOutlineEditorScope .ProseMirror > .notice-block,
 .luxnoteOutlineEditorScope .ProseMirror > blockquote,
 .luxnoteOutlineEditorScope .ProseMirror > pre,
 .luxnoteOutlineEditorScope .ProseMirror > table,
@@ -81,6 +82,7 @@
 .luxnoteOutlineEditorScope .ProseMirror > p,
 .luxnoteOutlineEditorScope .ProseMirror > ul,
 .luxnoteOutlineEditorScope .ProseMirror > ol,
+.luxnoteOutlineEditorScope .ProseMirror > .notice-block,
 .luxnoteOutlineEditorScope .ProseMirror > blockquote,
 .luxnoteOutlineEditorScope .ProseMirror > pre,
 .luxnoteOutlineEditorScope .ProseMirror > table,
@@ -90,6 +92,96 @@
 
 .luxnoteOutlineEditorScope .ProseMirror p {
   min-height: 1.5em;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block {
+  display: flex;
+  align-items: center;
+  background: rgba(15, 123, 197, 0.1);
+  border-left: 4px solid #0f7bc5;
+  color: #effaff;
+  border-radius: 4px;
+  padding: 8px 10px 8px 8px;
+  margin: 8px 0;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block a {
+  color: #effaff;
+  text-decoration: underline;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block .icon {
+  width: 24px;
+  height: 24px;
+  align-self: flex-start;
+  margin-right: 4px;
+  color: #0f7bc5;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block .icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block .content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block .content > :first-child {
+  margin-top: 0;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block .content > :last-child {
+  margin-bottom: 0;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block:dir(rtl) .icon {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.tip {
+  background: rgba(154, 107, 18, 0.1);
+  border-left: 4px solid #9a6b12;
+  color: #effaff;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.tip .icon {
+  color: #9a6b12;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.tip a {
+  color: #effaff;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.warning {
+  background: rgba(216, 94, 66, 0.1);
+  border-left: 4px solid #d85e42;
+  color: #effaff;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.warning .icon {
+  color: #d85e42;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.warning a {
+  color: #effaff;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.success {
+  background: rgba(24, 123, 94, 0.1);
+  border-left: 4px solid #187b5e;
+  color: #effaff;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.success .icon {
+  color: #187b5e;
+}
+
+.luxnoteOutlineEditorScope .ProseMirror .notice-block.success a {
+  color: #effaff;
 }
 
 .luxnoteOutlineEditorScope .ProseMirror ul,

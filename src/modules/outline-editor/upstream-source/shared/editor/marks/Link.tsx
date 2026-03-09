@@ -198,21 +198,17 @@ export default class Link extends Mark {
               return false;
             }
 
-            // clicking a link while editing should show the link toolbar,
-            // clicking in read-only will navigate
-            if (!view.editable || (view.editable && !view.hasFocus())) {
-              const href =
-                target.href ||
-                (target.parentNode instanceof HTMLAnchorElement
-                  ? target.parentNode.href
-                  : "");
+            const href =
+              target.href ||
+              (target.parentNode instanceof HTMLAnchorElement
+                ? target.parentNode.href
+                : "");
 
+            if (this.options.onClickLink && href) {
               try {
-                if (this.options.onClickLink && href) {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  this.options.onClickLink(sanitizeUrl(href), event);
-                }
+                event.stopPropagation();
+                event.preventDefault();
+                this.options.onClickLink(sanitizeUrl(href), event);
               } catch (_err) {
                 toast.error(this.options.dictionary.openLinkError);
               }

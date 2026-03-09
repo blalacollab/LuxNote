@@ -1,7 +1,10 @@
-import escapeRegExp from "lodash/escapeRegExp";
 import env from "../env";
 import { isBrowser } from "./browser";
 import { parseDomain } from "./domains";
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 /**
  * Prepends the CDN url to the given path (If a CDN is configured).
@@ -189,6 +192,10 @@ export function isBase64Url(url: string) {
 export function sanitizeUrl(url: string | null | undefined) {
   if (!url) {
     return undefined;
+  }
+
+  if (url.startsWith("blob:") || isBase64Url(url)) {
+    return url;
   }
 
   if (

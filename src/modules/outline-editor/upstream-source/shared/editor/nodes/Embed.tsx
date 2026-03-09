@@ -10,6 +10,7 @@ import type { Command } from "prosemirror-state";
 import { NodeSelection, TextSelection } from "prosemirror-state";
 import * as React from "react";
 import type { Primitive } from "utility-types";
+import { createOutlineEmbedMarkdownRule } from "../../../../../../lib/outlineEmbeds";
 import { sanitizeUrl } from "../../utils/urls";
 import EmbedComponent from "../components/Embed";
 import defaultEmbeds from "../embeds";
@@ -24,6 +25,12 @@ import { isList } from "../queries/isList";
 export default class Embed extends Node {
   get name() {
     return "embed";
+  }
+
+  get rulePlugins() {
+    return [
+      createOutlineEmbedMarkdownRule(this.editor?.props.embeds ?? defaultEmbeds),
+    ];
   }
 
   get schema(): NodeSpec {

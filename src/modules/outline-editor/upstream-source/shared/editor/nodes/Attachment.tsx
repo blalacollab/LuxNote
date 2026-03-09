@@ -16,6 +16,7 @@ import toggleWrap from "../commands/toggleWrap";
 import FileExtension from "../components/FileExtension";
 import Widget from "../components/Widget";
 import type { MarkdownSerializerState } from "../lib/markdown/serializer";
+import { inferContentType, isPdfSource } from "../lib/media";
 import attachmentsRule from "../rules/links";
 import type { ComponentProps } from "../types";
 import Node from "./Node";
@@ -64,12 +65,20 @@ export default class Attachment extends Node {
         {
           priority: 100,
           tag: "a.attachment",
-          getAttrs: (dom: HTMLAnchorElement) => ({
-            id: dom.id,
-            title: dom.innerText,
-            href: dom.getAttribute("href"),
-            size: parseInt(dom.dataset.size || "0", 10),
-          }),
+          getAttrs: (dom: HTMLAnchorElement) => {
+            const href = dom.getAttribute("href");
+            const title = dom.innerText;
+            const contentType = inferContentType(href, title);
+
+            return {
+              id: dom.id,
+              title,
+              href,
+              size: parseInt(dom.dataset.size || "0", 10),
+              contentType,
+              preview: isPdfSource(href, title),
+            };
+          },
         },
       ],
       toDOM: (node) => [
@@ -270,11 +279,19 @@ export default class Attachment extends Node {
   parseMarkdown() {
     return {
       node: "attachment",
-      getAttrs: (tok: Token) => ({
-        href: tok.attrGet("href"),
-        title: tok.attrGet("title"),
-        size: tok.attrGet("size"),
-      }),
+      getAttrs: (tok: Token) => {
+        const href = tok.attrGet("href");
+        const title = tok.attrGet("title");
+        const contentType = inferContentType(href, title);
+
+        return {
+          href,
+          title,
+          size: tok.attrGet("size"),
+          contentType,
+          preview: isPdfSource(href, title),
+        };
+      },
     };
   }
 }

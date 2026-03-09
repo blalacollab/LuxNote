@@ -2,6 +2,7 @@ import * as React from "react";
 import styled, { css } from "styled-components";
 import { sanitizeUrl } from "../../utils/urls";
 import type { ComponentProps } from "../types";
+import { probeVideoSource } from "../lib/media";
 import { ResizeLeft, ResizeRight } from "./ResizeHandle";
 import useDragResize from "./hooks/useDragResize";
 
@@ -15,6 +16,7 @@ export default function Video(props: Props) {
   const { isSelected, node, isEditable, children, onChangeSize } = props;
   const [naturalWidth] = React.useState(node.attrs.width);
   const [naturalHeight] = React.useState(node.attrs.height);
+  const [poster, setPoster] = React.useState<string | null>(null);
   const ref = React.useRef<HTMLDivElement>(null);
   const isResizable = !!onChangeSize;
 
@@ -44,6 +46,32 @@ export default function Video(props: Props) {
     }
   }, [node.attrs.width]);
 
+  React.useEffect(() => {
+    let cancelled = false;
+
+    setPoster(null);
+
+    if (!node.attrs.src) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void probeVideoSource(node.attrs.src).then((result) => {
+      if (cancelled) {
+        return;
+      }
+
+      if (result.poster) {
+        setPoster(result.poster);
+      }
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [node.attrs.src]);
+
   const style: React.CSSProperties = {
     width: width || "auto",
     maxHeight: height || "auto",
@@ -61,6 +89,8 @@ export default function Video(props: Props) {
           title={node.attrs.title}
           style={style}
           controls={!dragging}
+          poster={poster ?? undefined}
+          preload="metadata"
         />
         {isEditable && isResizable && (
           <>

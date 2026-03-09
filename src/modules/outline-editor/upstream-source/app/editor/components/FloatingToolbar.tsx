@@ -4,7 +4,6 @@ import * as React from "react";
 import { Portal as ReactPortal } from "react-portal";
 import styled, { css } from "styled-components";
 import { isCode } from "@shared/editor/lib/isCode";
-import { findParentNode } from "@shared/editor/queries/findParentNode";
 import { EditorStyleHelper } from "@shared/editor/styles/EditorStyleHelper";
 import { depths, s } from "@shared/styles";
 import { getSafeAreaInsets } from "@shared/utils/browser";
@@ -94,28 +93,14 @@ function usePosition({
     selection instanceof NodeSelection && isCode(selection.node);
   const codeBlock = isCodeNodeSelection
     ? { pos: selection.from, node: selection.node }
-    : findParentNode(isCode)(view.state.selection);
-  const noticeBlock = findParentNode(
-    (node) => node.type.name === "container_notice"
-  )(view.state.selection);
+    : null;
 
-  if (
-    (codeBlock || noticeBlock) &&
-    (view.state.selection.empty || isCodeNodeSelection)
-  ) {
-    const position = codeBlock
-      ? codeBlock.pos
-      : noticeBlock
-        ? noticeBlock.pos
-        : null;
-
-    if (position !== null) {
-      const element = view.nodeDOM(position);
-      const bounds = (element as HTMLElement).getBoundingClientRect();
-      selectionBounds.top = bounds.top + menuHeight;
-      selectionBounds.left = bounds.right;
-      selectionBounds.right = bounds.right;
-    }
+  if (codeBlock && (view.state.selection.empty || isCodeNodeSelection)) {
+    const element = view.nodeDOM(codeBlock.pos);
+    const bounds = (element as HTMLElement).getBoundingClientRect();
+    selectionBounds.top = bounds.top + menuHeight;
+    selectionBounds.left = bounds.right;
+    selectionBounds.right = bounds.right;
   }
 
   if (!active || !menuRef.current || !menuHeight) {
@@ -229,12 +214,7 @@ function usePosition({
     top: Math.round(top - offsetParent.top),
     offset: Math.round(offset),
     maxWidth: Math.min(window.innerWidth, offsetParent.width) - margin * 2,
-    blockSelection: !!(
-      codeBlock ||
-      isColSelection ||
-      isRowSelection ||
-      noticeBlock
-    ),
+    blockSelection: !!(codeBlock || isColSelection || isRowSelection),
     visible: true,
   };
 }

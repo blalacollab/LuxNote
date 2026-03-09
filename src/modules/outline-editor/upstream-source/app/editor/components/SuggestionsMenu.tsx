@@ -2,6 +2,7 @@ import * as VisuallyHidden from "@radix-ui/react-visually-hidden";
 import commandScore from "command-score";
 import capitalize from "lodash/capitalize";
 import orderBy from "lodash/orderBy";
+import { ReturnIcon } from "outline-icons";
 import { TextSelection } from "prosemirror-state";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -10,6 +11,11 @@ import styled, { keyframes } from "styled-components";
 import insertFiles from "@shared/editor/commands/insertFiles";
 import { EmbedDescriptor } from "@shared/editor/embeds";
 import filterExcessSeparators from "@shared/editor/lib/filterExcessSeparators";
+import {
+  getDisplayNameFromUrl,
+  isDirectVideoUrl,
+  isYouTubeUrl,
+} from "@shared/editor/lib/media";
 import { findParentNode } from "@shared/editor/queries/findParentNode";
 import type { MenuItem } from "@shared/editor/types";
 import { s } from "@shared/styles";
@@ -70,11 +76,13 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
     clientX: 0,
     clientY: 0,
   });
-  const inputRef = React.useRef<HTMLInputElement>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const linkInputRef = React.useRef<HTMLInputElement>(null);
   const selectionRef = React.useRef<{ from: number; to: number } | null>(null);
   const [insertItem, setInsertItem] = React.useState<
     MenuItem | EmbedDescriptor
   >();
+  const [linkInputValue, setLinkInputValue] = React.useState("");
   const [selectedIndex, setSelectedIndex] = React.useState(0);
   const [submenu, setSubmenu] = React.useState<{
     index: number;
@@ -156,6 +164,22 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
     setSubmenu(null);
   }, [props.search]);
 
+  React.useEffect(() => {
+    if (!insertItem) {
+      setLinkInputValue("");
+      return;
+    }
+
+    setLinkInputValue("");
+
+    const frame = requestAnimationFrame(() => {
+      linkInputRef.current?.focus();
+      linkInputRef.current?.select();
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [insertItem]);
+
   const handleClearSearch = React.useCallback(() => {
     const { state, dispatch } = view;
     const selection =
@@ -229,6 +253,74 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
     [commands, handleClearSearch, props, restoreSelection, view]
   );
 
+  const insertVideoLink = React.useCallback(
+    (href: string) => {
+      const normalizedHref = href.trim();
+      const fallbackTitle =
+        typeof dictionary.video === "string" ? dictionary.video : "Video";
+
+      if (isYouTubeUrl(normalizedHref)) {
+        insertNode({
+          name: "embed",
+          attrs: {
+            href: normalizedHref,
+          },
+        });
+        return;
+      }
+
+      if (!isDirectVideoUrl(normalizedHref)) {
+        toast.error(
+          "Please enter a direct video URL or a YouTube link"
+        );
+        return;
+      }
+
+      insertNode({
+        name: "video",
+        attrs: {
+          src: normalizedHref,
+          title: getDisplayNameFromUrl(normalizedHref, fallbackTitle),
+        },
+      });
+    },
+    [dictionary.video, insertNode]
+  );
+
+  const submitLinkInput = React.useCallback(
+    (rawHref: string) => {
+      if (!insertItem) {
+        return;
+      }
+
+      const href = rawHref.trim();
+
+      if (!href) {
+        return;
+      }
+
+      if (insertItem.name === "video") {
+        insertVideoLink(href);
+        return;
+      }
+
+      const matches = "matcher" in insertItem && insertItem.matcher(href);
+
+      if (!matches) {
+        toast.error(dictionary.embedInvalidLink);
+        return;
+      }
+
+      insertNode({
+        name: "embed",
+        attrs: {
+          href,
+        },
+      });
+    },
+    [dictionary.embedInvalidLink, insertItem, insertNode, insertVideoLink]
+  );
+
   const handleClickItem = React.useCallback(
     (item) => {
       if (item.disabled) {
@@ -254,7 +346,7 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
             item.attrs
           );
         case "video":
-          return triggerFilePick("video/*", item.attrs);
+          return triggerLinkInput(item);
         case "attachment":
           return triggerFilePick(item.attrs?.accept ?? "*", item.attrs);
         case "embed":
@@ -287,21 +379,7 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
     if (event.key === "Enter") {
       event.preventDefault();
       event.stopPropagation();
-
-      const href = event.currentTarget.value;
-      const matches = "matcher" in insertItem && insertItem.matcher(href);
-
-      if (!matches) {
-        toast.error(dictionary.embedInvalidLink);
-        return;
-      }
-
-      insertNode({
-        name: "embed",
-        attrs: {
-          href,
-        },
-      });
+      submitLinkInput(event.currentTarget.value);
     }
 
     if (event.key === "Escape") {
@@ -321,6 +399,14 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
     }
 
     const href = event.clipboardData.getData("text/plain");
+
+    if (insertItem.name === "video") {
+      event.preventDefault();
+      event.stopPropagation();
+      setLinkInputValue(href);
+      return;
+    }
+
     const matches = "matcher" in insertItem && insertItem.matcher(href);
 
     if (matches) {
@@ -336,15 +422,31 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
     }
   };
 
+  const handleLinkInputChange = React.useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setLinkInputValue(event.currentTarget.value);
+    },
+    []
+  );
+
+  const handleSubmitLinkButton = React.useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      submitLinkInput(linkInputValue);
+    },
+    [linkInputValue, submitLinkInput]
+  );
+
   const triggerFilePick = (accept: string, attrs?: Record<string, any>) => {
-    if (inputRef.current) {
+    if (fileInputRef.current) {
       if (accept) {
-        inputRef.current.accept = accept;
+        fileInputRef.current.accept = accept;
       }
       if (attrs) {
-        inputRef.current.dataset.attrs = attrs ? JSON.stringify(attrs) : "";
+        fileInputRef.current.dataset.attrs = attrs ? JSON.stringify(attrs) : "";
       }
-      inputRef.current.click();
+      fileInputRef.current.click();
     }
   };
 
@@ -382,13 +484,13 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
         onFileUploadStop,
         onFileUploadProgress,
         dictionary,
-        isAttachment: inputRef.current?.accept === "*",
+        isAttachment: fileInputRef.current?.accept === "*",
         attrs,
       });
     }
 
-    if (inputRef.current) {
-      inputRef.current.value = "";
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
 
     props.onClose();
@@ -758,7 +860,7 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
         <Trans>Import document</Trans>
         <input
           type="file"
-          ref={inputRef}
+          ref={fileInputRef}
           onChange={handleFilesPicked}
           multiple
         />
@@ -909,18 +1011,37 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
               {insertItem ? (
                 <LinkInputWrapper>
                   <LinkInput
+                    ref={linkInputRef}
                     type="text"
                     placeholder={
-                      "placeholder" in insertItem && !!insertItem.placeholder
+                      insertItem.name === "video"
+                        ? "Paste a direct video or YouTube URL"
+                        : "placeholder" in insertItem && !!insertItem.placeholder
                         ? insertItem.placeholder
                         : insertItem.title
                           ? dictionary.pasteLinkWithTitle(insertItem.title)
                           : dictionary.pasteLink
                     }
+                    value={linkInputValue}
+                    onChange={handleLinkInputChange}
                     onKeyDown={handleLinkInputKeydown}
                     onPaste={handleLinkInputPaste}
                     autoFocus
                   />
+                  <LinkSubmitButton
+                    type="button"
+                    aria-label={
+                      insertItem.name === "video" ? "Insert video" : "Insert link"
+                    }
+                    disabled={!linkInputValue.trim()}
+                    onMouseDown={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                    }}
+                    onClick={handleSubmitLinkButton}
+                  >
+                    <ReturnIcon />
+                  </LinkSubmitButton>
                 </LinkInputWrapper>
               ) : (
                 <List>{renderItems()}</List>
@@ -959,18 +1080,37 @@ function SuggestionsMenu<T extends MenuItem>(props: Props<T>) {
           {insertItem ? (
             <LinkInputWrapper>
               <LinkInput
+                ref={linkInputRef}
                 type="text"
                 placeholder={
-                  "placeholder" in insertItem && !!insertItem.placeholder
+                  insertItem.name === "video"
+                    ? "Paste a direct video or YouTube URL"
+                    : "placeholder" in insertItem && !!insertItem.placeholder
                     ? insertItem.placeholder
                     : insertItem.title
                       ? dictionary.pasteLinkWithTitle(insertItem.title)
                       : dictionary.pasteLink
                 }
+                value={linkInputValue}
+                onChange={handleLinkInputChange}
                 onKeyDown={handleLinkInputKeydown}
                 onPaste={handleLinkInputPaste}
                 autoFocus
               />
+              <LinkSubmitButton
+                type="button"
+                aria-label={
+                  insertItem.name === "video" ? "Insert video" : "Insert link"
+                }
+                disabled={!linkInputValue.trim()}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                }}
+                onClick={handleSubmitLinkButton}
+              >
+                <ReturnIcon />
+              </LinkSubmitButton>
             </LinkInputWrapper>
           ) : (
             <List>{renderItems()}</List>
@@ -1075,13 +1215,42 @@ const SubmenuPopoverContent = styled(PopoverContent)`
 `;
 
 const LinkInputWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 8px;
 `;
 
 const LinkInput = styled(Input)`
+  flex: 1 1 auto;
   height: 32px;
-  width: 100%;
   color: ${s("textSecondary")};
+`;
+
+const LinkSubmitButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  border: 0;
+  border-radius: 6px;
+  background: ${s("inputBorder")};
+  color: ${s("textSecondary")};
+  cursor: var(--pointer);
+  transition: background 100ms ease-in-out, color 100ms ease-in-out,
+    opacity 100ms ease-in-out;
+
+  &:hover:not(:disabled) {
+    background: ${s("backgroundSecondary")};
+    color: ${s("text")};
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
 `;
 
 const List = styled.ol`

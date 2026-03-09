@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { StyleSheetManager, ThemeProvider } from 'styled-components';
 
+import { outlineEmbeds } from '../lib/outlineEmbeds';
 import { decorateEditorContent } from '../lib/markdownDialect';
 import { createOutlineTheme } from '../lib/outlineTheme';
 import {
@@ -23,6 +24,25 @@ export interface OutlineNoteEditorProps {
 
 interface OutlineEditorHandle {
   value?: (asString?: boolean, trim?: boolean) => unknown;
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onerror = () => {
+      reject(reader.error ?? new Error('Failed to read file'));
+    };
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        resolve(reader.result);
+        return;
+      }
+
+      reject(new Error('Unexpected file reader result'));
+    };
+    reader.readAsDataURL(file);
+  });
 }
 
 function openExternalLink(href: string): void {
@@ -101,6 +121,13 @@ export function OutlineNoteEditor({
     }),
     [],
   );
+  const handleLocalUpload = async (file: File | string) => {
+    if (typeof file === 'string') {
+      return file;
+    }
+
+    return readFileAsDataUrl(file);
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -245,7 +272,8 @@ export function OutlineNoteEditor({
               defaultValue={initialValue}
               placeholder={placeholder}
               dictionary={runtime.defaultDictionary}
-              embeds={[]}
+              embeds={outlineEmbeds as any}
+              uploadFile={handleLocalUpload}
               extensions={extensions as any}
               hostAdapter={hostAdapter}
               editorStyle={{

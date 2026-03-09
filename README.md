@@ -43,7 +43,7 @@ npm run test
 - `Delete` / `Backspace`: delete the selected note
 - `Enter`: open the selected note in the fullscreen editor
 - `P`: focus the selected note
-- `Shift + /`: reveal the hidden settings note
+- `Settings`: open the settings panel from the bottom-left status dock
 - `Escape`: exit the fullscreen editor, clear selection, or leave link mode
 
 ## Architecture
@@ -51,7 +51,7 @@ npm run test
 ### Rendering split
 
 - `CanvasStage` draws the background grid and connection lines on a single canvas layer.
-- `React DOM` renders only the visible note cards, the hidden settings note, and the fullscreen note shell.
+- `React DOM` renders only the visible note cards, the bottom-left status dock, and the fullscreen note shell.
 - The note shell hosts the local `outline-editor` module for Markdown-first WYSIWYG editing while LuxNote keeps title, tags, and persistence outside the editor runtime.
 - This hybrid avoids expensive DOM work for vector layers while keeping document editing rich and predictable.
 

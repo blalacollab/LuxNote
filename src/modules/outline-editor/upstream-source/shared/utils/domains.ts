@@ -1,5 +1,5 @@
-import trim from "lodash/trim";
 import env from "../env";
+import { isBrowser } from "./browser";
 
 type Domain = {
   teamSubdomain: string;
@@ -20,14 +20,25 @@ export function slugifyDomain(domain: string) {
 
 // strips protocol and whitespace from input
 // then strips the path and query string
-function normalizeUrl(url: string) {
-  return trim(url.replace(/(https?:)?\/\//, "")).split(/[/:?]/)[0];
+function normalizeUrl(url: string | null | undefined) {
+  if (!url) {
+    return "";
+  }
+
+  return url.replace(/(https?:)?\/\//, "").trim().split(/[/:?]/)[0];
 }
 
 // The base domain is where root cookies are set in hosted mode
 // It's also appended to a team's hosted subdomain to form their app URL
 export function getBaseDomain() {
-  const normalEnvUrl = normalizeUrl(env.URL);
+  const normalEnvUrl = normalizeUrl(
+    env.URL || (isBrowser ? window.location.origin : undefined),
+  );
+
+  if (!normalEnvUrl) {
+    return "";
+  }
+
   const tokens = normalEnvUrl.split(".");
 
   // remove reserved subdomains like "app"
