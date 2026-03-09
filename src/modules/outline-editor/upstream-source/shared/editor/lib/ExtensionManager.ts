@@ -187,8 +187,7 @@ export default class ExtensionManager {
       .map((extension) =>
         ["node", "mark"].includes(extension.type)
           ? extension.keys({
-              // @ts-expect-error TODO
-              type: schema[`${extension.type}s`][extension.name],
+              type: (schema as any)[`${extension.type}s`][extension.name],
               schema,
             })
           : (extension as Extension).keys({ schema })
@@ -208,8 +207,7 @@ export default class ExtensionManager {
       .filter((extension) => extension.inputRules)
       .map((extension) =>
         extension.inputRules({
-          // @ts-expect-error TODO
-          type: schema[`${extension.type}s`][extension.name],
+          type: (schema as any)[`${extension.type}s`][extension.name],
           schema,
         })
       );
@@ -227,16 +225,16 @@ export default class ExtensionManager {
         const { name, type } = extension;
         const commands: Record<string, CommandFactory> = {};
 
-        // @ts-expect-error FIXME
-        const value = extension.commands({
-          schema,
-          ...(["node", "mark"].includes(type)
-            ? {
-                // @ts-expect-error TODO
-                type: schema[`${type}s`][name],
-              }
-            : {}),
-        });
+        const value = extension.commands(
+          {
+            schema,
+            ...(["node", "mark"].includes(type)
+              ? {
+                  type: (schema as any)[`${type}s`][name],
+                }
+              : {}),
+          } as any
+        );
 
         const apply = (
           callback: CommandFactory,

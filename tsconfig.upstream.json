@@ -1,0 +1,35 @@
+{
+  "extends": "./tsconfig.app.json",
+  "compilerOptions": {
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "useUnknownInCatchVariables": false,
+    "baseUrl": ".",
+    "paths": {
+      "outline-editor-local-runtime": [
+        "./src/modules/outline-editor/upstream-source/public/index.d.ts"
+      ],
+      "~/editor": [
+        "./src/modules/outline-editor/upstream-source/app/editor/index.tsx"
+      ],
+      "~/editor/*": [
+        "./src/modules/outline-editor/upstream-source/app/editor/*"
+      ],
+      "@shared/": [
+        "./src/modules/outline-editor/upstream-source/shared/"
+      ],
+      "@shared/*": [
+        "./src/modules/outline-editor/upstream-source/shared/*"
+      ]
+    }
+  },
+  "include": [
+    "src/lib/outlineEmbeds.ts",
+    "src/modules/outline-editor/upstream-source/**/*.d.ts",
+    "src/modules/outline-editor/upstream-source/public/index.ts",
+    "src/modules/outline-editor/reactDomLegacyCompat.ts",
+    "src/modules/outline-editor/styles.ts"
+  ],
+  "exclude": []
+}

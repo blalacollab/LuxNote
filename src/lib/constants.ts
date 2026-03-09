@@ -20,5 +20,6 @@ export const DB_NAME = 'luxnote';
 export const DB_STORE = 'scenes';
 export const SCENE_KEY = 'latest';
 export const LOCAL_STORAGE_KEY = 'luxnote.scene.v1';
+export const YOUTUBE_PROGRESS_LOCAL_STORAGE_KEY = 'luxnote.youtube.progress.v1';
 export const VELOCITY_CUTOFF = 0.02;
 export const FRAME_TIME = 1000 / 60;

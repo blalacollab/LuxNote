@@ -1,5 +1,6 @@
 import { BrowserIcon } from "outline-icons";
 import * as React from "react";
+import type { EditorView } from "prosemirror-view";
 import styled from "styled-components";
 import type { Primitive } from "utility-types";
 import env from "../../env";
@@ -27,6 +28,8 @@ export type EmbedProps = {
   isEditable: boolean;
   embed: EmbedDescriptor;
   matches: RegExpMatchArray;
+  style?: React.CSSProperties;
+  view?: EditorView;
   attrs: {
     href: string;
   };

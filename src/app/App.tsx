@@ -108,7 +108,6 @@ export function App() {
     () => computeVisibleNoteIds(notes, camera, viewport),
     [notes, camera, viewport],
   );
-  const selectedNote = selectedNoteId ? notes[selectedNoteId] ?? null : null;
   const dialogNote =
     activeDialog?.type === 'note' ? notes[activeDialog.noteId] ?? null : null;
   const pendingDeleteNote = pendingDeleteNoteId
@@ -419,7 +418,7 @@ export function App() {
             </div>
           ) : null}
 
-          <CanvasDialog dialog={activeDialog} note={dialogNote ?? selectedNote} />
+          <CanvasDialog dialog={activeDialog} note={dialogNote} />
 
           {pendingDeleteNote ? (
             <div

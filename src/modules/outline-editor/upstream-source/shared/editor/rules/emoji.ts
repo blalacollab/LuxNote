@@ -1,10 +1,11 @@
 import type { StateInline } from "markdown-it";
 import type MarkdownIt from "markdown-it";
+import type { Options as MarkdownItOptions } from "markdown-it";
 import { full as emojiPlugin } from "markdown-it-emoji";
 import { isUUID } from "validator";
 import { nameToEmoji } from "../lib/emoji";
 
-type Options = MarkdownIt.Options & {
+type Options = MarkdownItOptions & {
   emoji: boolean;
 };
 

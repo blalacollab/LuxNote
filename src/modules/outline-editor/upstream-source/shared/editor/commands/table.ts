@@ -519,8 +519,14 @@ export function addRowBefore({ index }: { index?: number }): Command {
 
     chainTransactions(
       headerSpecialCase ? toggleHeader("row") : undefined,
-      (s, d) =>
-        !!d?.(addRowWithAlignment(s.tr, rect, position, copyFromRow, s)),
+      (s, d) => {
+        if (!d) {
+          return false;
+        }
+
+        d(addRowWithAlignment(s.tr, rect, position, copyFromRow, s));
+        return true;
+      },
       headerSpecialCase ? toggleHeader("row") : undefined,
       collapseSelection()
     )(state, dispatch);
@@ -586,7 +592,14 @@ export function addColumnBefore({ index }: { index?: number }): Command {
 
     chainTransactions(
       headerSpecialCase ? toggleHeader("column") : undefined,
-      (s, d) => !!d?.(addColumn(s.tr, rect, position)),
+      (s, d) => {
+        if (!d) {
+          return false;
+        }
+
+        d(addColumn(s.tr, rect, position));
+        return true;
+      },
       headerSpecialCase ? toggleHeader("column") : undefined,
       collapseSelection()
     )(state, dispatch);

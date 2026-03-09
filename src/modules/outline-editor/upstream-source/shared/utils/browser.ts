@@ -102,10 +102,9 @@ try {
       supportsPassive = true;
     },
   });
-  // @ts-expect-error ts-migrate(2769) testPassive is not a real event
-  window.addEventListener("testPassive", null, opts);
-  // @ts-expect-error ts-migrate(2769) testPassive is not a real event
-  window.removeEventListener("testPassive", null, opts);
+  const noop = () => undefined;
+  window.addEventListener("testPassive", noop, opts);
+  window.removeEventListener("testPassive", noop, opts);
 } catch (_err) {
   // Ignore
 }

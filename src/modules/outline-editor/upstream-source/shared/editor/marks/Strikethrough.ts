@@ -22,7 +22,7 @@ export default class Strikethrough extends Mark {
         },
         {
           style: "text-decoration",
-          getAttrs: (value) => (value === "line-through" ? null : false),
+          getAttrs: (value) => (value === "line-through" ? {} : false),
         },
       ],
       toDOM: () => ["del", 0],

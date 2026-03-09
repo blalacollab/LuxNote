@@ -251,6 +251,7 @@ export function OutlineNoteEditor({
       ref={rootRef}
       className="luxnoteOutlineEditorScope"
       data-note-editor-root="true"
+      data-note-id={editorKey}
       onPointerDownCapture={() => {
         hasUserInteractedRef.current = true;
       }}

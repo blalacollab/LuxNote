@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite --force",
-    "build": "tsc -b && vite build && npm run check:bundle",
+    "build": "npm run typecheck:upstream && tsc -b && vite build && npm run check:bundle",
     "check:bundle": "node scripts/check-bundle-budget.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck:upstream": "tsc -p tsconfig.upstream.json --pretty false"
   },
   "dependencies": {
     "@benrbray/prosemirror-math": "^1.0.0",

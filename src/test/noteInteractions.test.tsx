@@ -283,6 +283,39 @@ describe('note interactions', () => {
     expect(useCanvasStore.getState().notes[id]).toBeUndefined();
   });
 
+  it('does not clear a note body after closing the dialog and clicking blank canvas', async () => {
+    const note = Object.values(useCanvasStore.getState().notes)[0];
+
+    useCanvasStore.setState((state) => ({
+      notes: {
+        ...state.notes,
+        [note.id]: {
+          ...state.notes[note.id],
+          body: 'Keep this body',
+        },
+      },
+      activeDialog: {
+        type: 'note',
+        noteId: note.id,
+      },
+      selectedNoteId: note.id,
+    }));
+
+    await renderAppWithSettledEffects();
+
+    act(() => {
+      useCanvasStore.getState().closeDialog();
+    });
+
+    act(() => {
+      const store = useCanvasStore.getState();
+      store.selectNote(null);
+      store.cancelLink();
+    });
+
+    expect(useCanvasStore.getState().notes[note.id]?.body).toBe('Keep this body');
+  });
+
   it('opens external links from the editor wrapper without throwing', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
     const user = userEvent.setup();

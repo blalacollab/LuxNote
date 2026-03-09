@@ -1,10 +1,11 @@
 import type { PluginSimple } from "markdown-it";
 import markdownit from "markdown-it";
+import type { Options as MarkdownItOptions } from "markdown-it";
 import type { Schema } from "prosemirror-model";
 
 type Options = {
   /** Markdown-it options. */
-  rules?: markdownit.Options;
+  rules?: MarkdownItOptions;
   /** Markdown-it plugins. */
   plugins?: PluginSimple[];
   /** The schema for associated editor. */
@@ -16,7 +17,7 @@ export default function makeRules({
   plugins = [],
   schema,
 }: Options) {
-  const markdownIt = markdownit("default", {
+  const markdownIt = new markdownit("default", {
     breaks: false,
     html: false,
     linkify: false,

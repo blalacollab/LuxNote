@@ -26,7 +26,11 @@ type Props = Omit<
 const EmojiMenu = (props: Props) => {
   const { hostAdapter } = useEditorHost();
   const { search = "" } = props;
-  const customEmojis = hostAdapter?.getCustomEmojis?.() ?? [];
+  const customEmojis =
+    hostAdapter?.getCustomEmojis?.().filter(
+      (item): item is { id: string; name: string; url: string } =>
+        typeof item.url === "string" && item.url.length > 0
+    ) ?? [];
 
   useEffect(() => {
     // No-op in standalone mode. Host can provide preloaded custom emoji list.

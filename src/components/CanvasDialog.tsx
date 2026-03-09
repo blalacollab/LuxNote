@@ -83,7 +83,9 @@ export function CanvasDialog({ dialog, note }: CanvasDialogProps) {
   };
 
   const flushDraftToStorage = () => {
-    const liveBody = editorValueGetterRef.current?.() ?? bodyDraftRef.current;
+    const liveBody = activeNoteIdRef.current
+      ? editorValueGetterRef.current?.() ?? bodyDraftRef.current
+      : bodyDraftRef.current;
 
     if (liveBody !== bodyDraftRef.current) {
       bodyDraftRef.current = liveBody;
@@ -114,15 +116,17 @@ export function CanvasDialog({ dialog, note }: CanvasDialogProps) {
 
   useEffect(() => {
     commitBodySync();
-    activeNoteIdRef.current = note?.id ?? null;
 
     if (dialog?.type === 'note' && note) {
+      activeNoteIdRef.current = note.id;
       setTitleDraft(note.title);
       setBodyDraft(note.body);
       bodyDraftRef.current = note.body;
       return;
     }
 
+    activeNoteIdRef.current = null;
+    editorValueGetterRef.current = null;
     setTitleDraft('');
     setBodyDraft('');
     bodyDraftRef.current = '';

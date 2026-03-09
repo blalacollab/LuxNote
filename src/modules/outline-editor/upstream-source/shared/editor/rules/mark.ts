@@ -47,7 +47,6 @@ export default function (options: { delim: string; mark: string }) {
         state.delimiters.push({
           marker,
           length: 0, // disable "rule of 3" length checks meant for emphasis
-          // @ts-expect-error unknown property
           jump: i,
           token: state.tokens.length - 1,
           end: -1,
@@ -64,7 +63,7 @@ export default function (options: { delim: string; mark: string }) {
     //
     function postProcess(
       state: StateInline,
-      delimiters: StateInline.Delimiter[]
+      delimiters: Array<StateInline["delimiters"][number]>
     ) {
       let i = 0,
         j,

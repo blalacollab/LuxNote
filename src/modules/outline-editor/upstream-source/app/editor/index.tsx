@@ -23,7 +23,7 @@ import {
 import type { Decoration, NodeViewConstructor } from "prosemirror-view";
 import { EditorView } from "prosemirror-view";
 import * as React from "react";
-import type { DefaultTheme, ThemeProps } from "styled-components";
+import type { DefaultTheme } from "styled-components";
 import styled, { css } from "styled-components";
 import insertFiles from "@shared/editor/commands/insertFiles";
 import Styles from "@shared/editor/components/Styles";
@@ -177,7 +177,7 @@ type State = {
  * ~/components/Editor instead.
  */
 export class Editor extends React.PureComponent<
-  Props & ThemeProps<DefaultTheme>,
+  Props & { theme: DefaultTheme },
   State
 > {
   static defaultProps = {

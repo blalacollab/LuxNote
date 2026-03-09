@@ -37,11 +37,19 @@ export function createMathView(displayMode: boolean): NodeViewConstructor {
           macros: pluginState.macros,
         },
       },
-      MATH_PLUGIN_KEY,
-      () => {
-        nodeViews.splice(nodeViews.indexOf(nodeView));
-      }
+      MATH_PLUGIN_KEY
     );
+
+    const originalDestroy = nodeView.destroy?.bind(nodeView);
+    nodeView.destroy = () => {
+      const index = nodeViews.indexOf(nodeView);
+
+      if (index >= 0) {
+        nodeViews.splice(index, 1);
+      }
+
+      originalDestroy?.();
+    };
 
     nodeViews.push(nodeView);
     return nodeView;

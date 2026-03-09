@@ -102,11 +102,7 @@ const SVGIcon = observer(
 
     const Component = IconLibrary.getComponent(icon);
 
-    return (
-      <Component color={color} size={size} className={className}>
-        {initial?.charAt(0).toUpperCase()}
-      </Component>
-    );
+    return <Component color={color} size={size} className={className} />;
   }
 );
 

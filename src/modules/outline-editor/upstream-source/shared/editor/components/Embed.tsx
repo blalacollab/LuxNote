@@ -67,7 +67,7 @@ const Embed = (props: Props) => {
 
 const InnerEmbed = React.forwardRef<HTMLIFrameElement, Props>(
   function InnerEmbed_(
-    { isEditable, isSelected, node, embeds, embedsDisabled, style },
+    { isEditable, isSelected, node, embeds, embedsDisabled, style, view },
     ref
   ) {
     const cache = React.useMemo(
@@ -109,16 +109,21 @@ const InnerEmbed = React.forwardRef<HTMLIFrameElement, Props>(
     }
 
     if ("component" in embed) {
+      const Component = embed.component;
+
+      if (!Component) {
+        return null;
+      }
+
       return (
-        // @ts-expect-error Component type
-        <embed.component
-          ref={ref}
-          attrs={node.attrs}
+        <Component
+          attrs={node.attrs as { href: string }}
           style={style}
           matches={matches}
           isEditable={isEditable}
           isSelected={isSelected}
           embed={embed}
+          view={view}
         />
       );
     }
