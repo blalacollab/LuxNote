@@ -261,6 +261,29 @@ describe('note interactions', () => {
     expect(useCanvasStore.getState().activeDialog).toBeNull();
   });
 
+  it('keeps the current note dialog open when hydrating with no persisted scene', () => {
+    const note = Object.values(useCanvasStore.getState().notes)[0];
+
+    useCanvasStore.setState({
+      isHydrated: false,
+      selectedNoteId: note.id,
+      activeDialog: {
+        type: 'note',
+        noteId: note.id,
+      },
+    });
+
+    useCanvasStore.getState().hydrate(null);
+
+    expect(useCanvasStore.getState().isHydrated).toBe(true);
+    expect(useCanvasStore.getState().selectedNoteId).toBe(note.id);
+    expect(useCanvasStore.getState().activeDialog).toEqual({
+      type: 'note',
+      noteId: note.id,
+    });
+    expect(useCanvasStore.getState().notes[note.id]).toBeDefined();
+  });
+
   it('drops a pristine draft when changes are only blank-normalization', () => {
     const store = useCanvasStore.getState();
     const id = store.createNote();

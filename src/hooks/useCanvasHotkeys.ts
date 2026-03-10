@@ -43,6 +43,10 @@ export function useCanvasHotkeys(): boolean {
       const store = useCanvasStore.getState();
       const typingTarget = isTypingTarget(event.target);
 
+      if (!store.isHydrated) {
+        return;
+      }
+
       if (event.code === 'Escape') {
         if (store.pendingDeleteNoteId) {
           event.preventDefault();

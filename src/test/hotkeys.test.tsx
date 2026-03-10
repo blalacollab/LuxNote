@@ -35,6 +35,17 @@ describe('useCanvasHotkeys', () => {
     expect(screen.getByLabelText('note-count')).toHaveTextContent('4');
   });
 
+  it('ignores Ctrl+N before the initial scene hydration finishes', async () => {
+    const user = userEvent.setup();
+    useCanvasStore.setState({ isHydrated: false });
+    render(<HotkeyHarness />);
+
+    await user.keyboard('{Control>}n{/Control}');
+
+    expect(screen.getByLabelText('note-count')).toHaveTextContent('3');
+    expect(useCanvasStore.getState().activeDialog).toBeNull();
+  });
+
   it('ignores plain typing while focused in a textarea', async () => {
     const user = userEvent.setup();
     render(<HotkeyHarness />);

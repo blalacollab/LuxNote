@@ -66,10 +66,6 @@ export default defineConfig({
             return 'editor-core';
           }
 
-          if (id.includes('/node_modules/')) {
-            return 'app-core';
-          }
-
           return undefined;
         },
       },

@@ -10,6 +10,7 @@ import { useCanvasHotkeys } from '../hooks/useCanvasHotkeys';
 import { useScenePersistence } from '../hooks/useScenePersistence';
 import { useViewportSync } from '../hooks/useViewportSync';
 import type { Vec2 } from '../lib/types';
+import { preloadOutlineEditorRuntime } from '../modules/outline-editor';
 import { useCanvasStore } from '../store/canvasStore';
 import { CanvasStage } from '../components/CanvasStage';
 import { CanvasDialog } from '../components/CanvasDialog';
@@ -286,6 +287,40 @@ export function App() {
     });
     store.openNoteDialog(id);
   };
+
+  useEffect(() => {
+    if (!isHydrated) {
+      return;
+    }
+
+    let cancelled = false;
+    let timeoutId: number | null = null;
+    let idleId: number | null = null;
+
+    const preload = () => {
+      if (!cancelled) {
+        preloadOutlineEditorRuntime();
+      }
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      idleId = window.requestIdleCallback(preload, { timeout: 1200 });
+    } else {
+      timeoutId = window.setTimeout(preload, 180);
+    }
+
+    return () => {
+      cancelled = true;
+
+      if (idleId !== null && typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(idleId);
+      }
+
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
+  }, [isHydrated]);
 
   useEffect(() => {
     const element = viewportRef.current;

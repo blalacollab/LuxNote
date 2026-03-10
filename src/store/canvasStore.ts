@@ -615,11 +615,20 @@ export const useCanvasStore = createWithEqualityFn<CanvasStoreState>()(
     },
 
     hydrate: (scene) => {
-      const nextScene = scene ?? createDefaultScene();
-      const viewport = get().viewport;
+      const state = get();
+      const viewport = state.viewport;
+
+      if (!scene) {
+        set({
+          viewport,
+          isHydrated: true,
+          saveStatus: 'idle',
+        });
+        return;
+      }
 
       set({
-        ...sceneToState(nextScene),
+        ...sceneToState(scene),
         viewport,
         selectedNoteId: null,
         linkingFromId: null,

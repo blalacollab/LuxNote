@@ -12,6 +12,10 @@ export type {
   ResolvedInternalLink,
 } from './runtime';
 
+let outlineRuntimePromise:
+  | Promise<typeof import('./runtime')>
+  | null = null;
+
 function ensureNodeCompatGlobals() {
   const globalObject = globalThis as any;
 
@@ -58,9 +62,24 @@ function ensureNodeCompatGlobals() {
   }
 }
 
-export async function loadOutlineEditorRuntime() {
+function getOutlineEditorRuntimePromise() {
   ensureNodeCompatGlobals();
-  await import('../../lib/outlineI18n');
-  await import('./styles');
-  return import('./runtime');
+
+  if (!outlineRuntimePromise) {
+    outlineRuntimePromise = (async () => {
+      await import('../../lib/outlineI18n');
+      await import('./styles');
+      return import('./runtime');
+    })();
+  }
+
+  return outlineRuntimePromise;
+}
+
+export function preloadOutlineEditorRuntime() {
+  void getOutlineEditorRuntimePromise();
+}
+
+export async function loadOutlineEditorRuntime() {
+  return getOutlineEditorRuntimePromise();
 }
